@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once 'includes/session.php';
 
 // Redirect if already logged in
 if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {

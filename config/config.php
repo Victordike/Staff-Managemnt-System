@@ -13,8 +13,6 @@ define('BASE_URL', '/');
 
 // Session configuration
 define('SESSION_LIFETIME', 3600); // 1 hour
-ini_set('session.cookie_lifetime', SESSION_LIFETIME);
-ini_set('session.gc_maxlifetime', SESSION_LIFETIME);
 
 // Upload configuration
 define('UPLOAD_DIR', __DIR__ . '/../uploads/csv/');

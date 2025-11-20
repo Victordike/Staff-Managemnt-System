@@ -25,11 +25,11 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
 <body class="overflow-hidden">
     <!-- Background Slideshow -->
     <div class="slideshow-container">
-        <img src="assets/images/slideshow/slide1.jpg" class="slideshow-image active" alt="Slide 1">
-        <img src="assets/images/slideshow/slide2.jpg" class="slideshow-image" alt="Slide 2">
-        <img src="assets/images/slideshow/slide3.jpg" class="slideshow-image" alt="Slide 3">
-        <img src="assets/images/slideshow/slide4.jpg" class="slideshow-image" alt="Slide 4">
-        <img src="assets/images/slideshow/slide5.jpg" class="slideshow-image" alt="Slide 5">
+        <img src="assets/images/slideshow/slide1.svg" class="slideshow-image active" alt="Slide 1">
+        <img src="assets/images/slideshow/slide2.svg" class="slideshow-image" alt="Slide 2">
+        <img src="assets/images/slideshow/slide3.svg" class="slideshow-image" alt="Slide 3">
+        <img src="assets/images/slideshow/slide4.svg" class="slideshow-image" alt="Slide 4">
+        <img src="assets/images/slideshow/slide5.svg" class="slideshow-image" alt="Slide 5">
     </div>
     
     <!-- Dark Blue Overlay -->

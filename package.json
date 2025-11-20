@@ -1,0 +1,12 @@
+{
+  "name": "staff-management-system",
+  "version": "1.0.0",
+  "description": "Staff Management System for Federal Polytechnic of Oil and Gas",
+  "scripts": {
+    "build:css": "tailwindcss -i ./assets/css/input.css -o ./assets/css/output.css --minify",
+    "watch:css": "tailwindcss -i ./assets/css/input.css -o ./assets/css/output.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

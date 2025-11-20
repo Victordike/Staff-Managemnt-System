@@ -1,7 +1,9 @@
 <?php
+require_once 'includes/functions.php';
+requireAdmin();
+
 $pageTitle = 'Admin Dashboard';
 require_once 'includes/head.php';
-requireAdmin();
 
 try {
     $db = Database::getInstance();

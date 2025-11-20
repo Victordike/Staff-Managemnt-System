@@ -1,7 +1,9 @@
 <?php
+require_once 'includes/functions.php';
+requireSuperAdmin();
+
 $pageTitle = 'Upload CSV';
 require_once 'includes/head.php';
-requireSuperAdmin();
 
 $error = '';
 $success = '';

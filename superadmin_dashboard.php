@@ -1,7 +1,9 @@
 <?php
+require_once 'includes/functions.php';
+requireSuperAdmin();
+
 $pageTitle = 'Super Admin Dashboard';
 require_once 'includes/head.php';
-requireSuperAdmin();
 
 try {
     $db = Database::getInstance();

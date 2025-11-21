@@ -123,8 +123,12 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                         <span class="sidebar-text ml-3">My Records</span>
                     </a>
                     <a href="view_received_memos.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'view_received_memos.php' ? 'active' : ''; ?>" data-tooltip="Received Memos">
-                        <i class="fas fa-inbox text-xl w-6"></i>
+                        <i class="fas fa-envelope text-xl w-6"></i>
                         <span class="sidebar-text ml-3">Received Memos</span>
+                    </a>
+                    <a href="memo_history.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'memo_history.php' ? 'active' : ''; ?>" data-tooltip="Memo History">
+                        <i class="fas fa-history text-xl w-6"></i>
+                        <span class="sidebar-text ml-3">Memo History</span>
                     </a>
                 <?php endif; ?>
             </nav>

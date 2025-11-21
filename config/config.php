@@ -1,10 +1,10 @@
 <?php
-// Database configuration
-define('DB_HOST', getenv('PGHOST'));
-define('DB_USER', getenv('PGUSER'));
-define('DB_PASS', getenv('PGPASSWORD'));
-define('DB_NAME', getenv('PGDATABASE'));
-define('DB_PORT', getenv('PGPORT'));
+// Database configuration for Local XAMPP MySQL
+define('DB_HOST', 'localhost');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+define('DB_NAME', 'fpog_sms');
+define('DB_PORT', '3306');
 
 // Application configuration
 define('SITE_NAME', 'Staff Management System');

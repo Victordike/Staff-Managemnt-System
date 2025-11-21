@@ -22,6 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($user && verifyPassword($password, $user['password'])) {
                 session_regenerate_id(true);
                 $_SESSION['user_id'] = $user['id'];
+                $_SESSION['admin_id'] = $user['id'];
                 $_SESSION['staff_id'] = $user['staff_id'];
                 $_SESSION['role'] = 'admin';
                 $_SESSION['firstname'] = $user['firstname'];

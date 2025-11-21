@@ -51,9 +51,15 @@ $initials = getInitials($firstname, $lastname);
                         <h3 class="font-semibold text-gray-800"><?php echo htmlspecialchars($fullname); ?></h3>
                         <p class="text-sm text-gray-600 capitalize"><?php echo htmlspecialchars($userRole); ?></p>
                     </div>
-                    <button class="sidebar-text mt-3 text-sm text-blue-600 hover:text-blue-800 transition">
-                        <i class="fas fa-user-circle mr-1"></i>Profile
-                    </button>
+                    <?php if ($userRole === 'superadmin'): ?>
+                        <a href="superadmin_profile.php" class="sidebar-text mt-3 text-sm text-blue-600 hover:text-blue-800 transition">
+                            <i class="fas fa-user-circle mr-1"></i>Profile
+                        </a>
+                    <?php elseif ($userRole === 'admin'): ?>
+                        <a href="admin_profile.php" class="sidebar-text mt-3 text-sm text-blue-600 hover:text-blue-800 transition">
+                            <i class="fas fa-user-circle mr-1"></i>Profile
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
             

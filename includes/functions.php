@@ -1,4 +1,9 @@
 <?php
+// Ensure session is started before any session operations
+if (session_status() === PHP_SESSION_NONE) {
+    @session_start();
+}
+
 function isLoggedIn() {
     return isset($_SESSION['user_id']) && isset($_SESSION['role']);
 }

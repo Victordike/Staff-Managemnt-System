@@ -1,37 +1,43 @@
 $(document).ready(function() {
     const themeToggle = $('#themeToggle');
+    const html = document.documentElement;
     
-    // Set initial theme state
-    updateThemeDisplay();
+    // Initialize theme on page load
+    initializeTheme();
     
-    // Toggle theme on button click
-    themeToggle.click(function() {
-        const html = document.documentElement;
-        const isDark = html.classList.contains('dark');
-        
-        if (isDark) {
-            html.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        } else {
+    function initializeTheme() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        applyTheme(savedTheme);
+    }
+    
+    function applyTheme(theme) {
+        if (theme === 'dark') {
             html.classList.add('dark');
             localStorage.setItem('theme', 'dark');
-        }
-        
-        updateThemeDisplay();
-    });
-    
-    function updateThemeDisplay() {
-        const isDark = document.documentElement.classList.contains('dark');
-        const icon = themeToggle.find('i');
-        
-        if (isDark) {
-            // In dark mode, show sun icon
-            icon.removeClass('fa-sun').addClass('fa-moon');
+            updateIconDisplay(true);
         } else {
-            // In light mode, show moon icon
-            icon.removeClass('fa-moon').addClass('fa-sun');
+            html.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+            updateIconDisplay(false);
         }
     }
+    
+    function updateIconDisplay(isDark) {
+        const icons = themeToggle.find('i');
+        icons.each(function() {
+            $(this).toggleClass('hidden');
+        });
+    }
+    
+    // Toggle theme on button click
+    themeToggle.on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const isDark = html.classList.contains('dark');
+        const newTheme = isDark ? 'light' : 'dark';
+        applyTheme(newTheme);
+    });
     
     // Update time every minute
     function updateTime() {

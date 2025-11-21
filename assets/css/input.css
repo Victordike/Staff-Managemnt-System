@@ -179,3 +179,55 @@
 .step-indicator.completed {
   @apply border-green-600 bg-green-600 text-white;
 }
+
+/* Animated Ticker */
+.ticker-container {
+  background: linear-gradient(90deg, #1e40af, #2563eb, #1e40af);
+  color: white;
+  padding: 1rem;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+}
+
+.ticker-content {
+  display: flex;
+  animation: scroll-left 30s linear infinite;
+  white-space: nowrap;
+  gap: 4rem;
+}
+
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+  min-width: fit-content;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* Hover pause animation */
+.ticker-container:hover .ticker-content {
+  animation-play-state: paused;
+}
+
+@media (max-width: 640px) {
+  .ticker-item {
+    font-size: 0.875rem;
+    gap: 2rem;
+  }
+  
+  .ticker-content {
+    animation: scroll-left 20s linear infinite;
+  }
+}

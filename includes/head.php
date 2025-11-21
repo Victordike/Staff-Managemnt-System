@@ -105,6 +105,10 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                         <i class="fas fa-user-tag text-xl w-6"></i>
                         <span class="sidebar-text ml-3">Manage Roles</span>
                     </a>
+                    <a href="upload_memo.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'upload_memo.php' ? 'active' : ''; ?>" data-tooltip="Upload Memo">
+                        <i class="fas fa-envelope text-xl w-6"></i>
+                        <span class="sidebar-text ml-3">Upload Memo</span>
+                    </a>
                 <?php elseif ($userRole === 'admin'): ?>
                     <a href="admin_dashboard.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'admin_dashboard.php' ? 'active' : ''; ?>" data-tooltip="Dashboard">
                         <i class="fas fa-tachometer-alt text-xl w-6"></i>

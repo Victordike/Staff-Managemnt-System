@@ -120,7 +120,7 @@ try {
         title VARCHAR(255) NOT NULL,
         description TEXT,
         file_path VARCHAR(500) NOT NULL,
-        file_type VARCHAR(50) NOT NULL,
+        file_type VARCHAR(255) NOT NULL,
         recipient_type VARCHAR(20) NOT NULL,
         recipient_id INTEGER,
         blur_detected BOOLEAN DEFAULT FALSE,

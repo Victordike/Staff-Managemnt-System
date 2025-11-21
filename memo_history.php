@@ -20,8 +20,8 @@ try {
     if (!$admin_id) {
         $memos = [];
     } else {
-        // Build query based on filters
-        $query = "SELECT m.*, u.firstname, u.lastname, mr.read_at
+        // Build query based on filters (deduplicated by file_path, showing only most recent)
+        $query = "SELECT DISTINCT ON (m.file_path) m.*, u.firstname, u.lastname, mr.read_at
                  FROM memos m
                  JOIN memo_recipients mr ON m.id = mr.memo_id
                  JOIN users u ON m.sender_id = u.id
@@ -46,7 +46,7 @@ try {
             }
         }
         
-        $query .= " ORDER BY m.created_at DESC";
+        $query .= " ORDER BY m.file_path, m.created_at DESC";
         
         $memos = $db->fetchAll($query, $params);
     }

@@ -17,14 +17,14 @@ try {
     if (!$admin_id) {
         $memos = [];
     } else {
-        // Get only UNREAD memos received by this admin
+        // Get only UNREAD memos received by this admin (deduplicated by file_path, showing only most recent)
         $memos = $db->fetchAll(
-            "SELECT m.*, u.firstname, u.lastname, mr.read_at
+            "SELECT DISTINCT ON (m.file_path) m.*, u.firstname, u.lastname, mr.read_at
              FROM memos m
              JOIN memo_recipients mr ON m.id = mr.memo_id
              JOIN users u ON m.sender_id = u.id
              WHERE mr.admin_id = ? AND mr.read_at IS NULL
-             ORDER BY m.created_at DESC",
+             ORDER BY m.file_path, m.created_at DESC",
             [$admin_id]
         );
         

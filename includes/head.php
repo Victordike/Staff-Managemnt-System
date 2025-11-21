@@ -109,6 +109,10 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                         <i class="fas fa-envelope text-xl w-6"></i>
                         <span class="sidebar-text ml-3">Upload Memo</span>
                     </a>
+                    <a href="manage_memos.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_memos.php' ? 'active' : ''; ?>" data-tooltip="Manage Memos">
+                        <i class="fas fa-tasks text-xl w-6"></i>
+                        <span class="sidebar-text ml-3">Manage Memos</span>
+                    </a>
                 <?php elseif ($userRole === 'admin'): ?>
                     <a href="admin_dashboard.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'admin_dashboard.php' ? 'active' : ''; ?>" data-tooltip="Dashboard">
                         <i class="fas fa-tachometer-alt text-xl w-6"></i>
@@ -117,6 +121,10 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                     <a href="my_records.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'my_records.php' ? 'active' : ''; ?>" data-tooltip="My Records">
                         <i class="fas fa-file-alt text-xl w-6"></i>
                         <span class="sidebar-text ml-3">My Records</span>
+                    </a>
+                    <a href="view_received_memos.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'view_received_memos.php' ? 'active' : ''; ?>" data-tooltip="Received Memos">
+                        <i class="fas fa-inbox text-xl w-6"></i>
+                        <span class="sidebar-text ml-3">Received Memos</span>
                     </a>
                 <?php endif; ?>
             </nav>

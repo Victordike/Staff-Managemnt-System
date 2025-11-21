@@ -208,7 +208,7 @@ function displayUsers(users) {
     tbody.innerHTML = users.map(user => `
         <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
             <td class="px-6 py-4">
-                <div class="w-10 h-10 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                <div class="w-30 h-30 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center text-white font-bold text-lg">
                     ${user.profile_picture && user.profile_picture !== '' ? `<img src="${user.profile_picture}" alt="Profile" class="w-full h-full object-cover">` : `${user.firstname.charAt(0)}${user.surname.charAt(0)}`}
                 </div>
             </td>

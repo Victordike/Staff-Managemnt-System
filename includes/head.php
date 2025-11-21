@@ -9,6 +9,22 @@ $firstname = $_SESSION['firstname'] ?? 'User';
 $lastname = $_SESSION['lastname'] ?? '';
 $profilePicture = $_SESSION['profile_picture'] ?? null;
 $initials = getInitials($firstname, $lastname);
+
+// Fetch profile picture from database for admin users
+if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
+    try {
+        $db = Database::getInstance();
+        $userProfile = $db->fetchOne(
+            "SELECT profile_picture FROM admin_users WHERE staff_id = ?",
+            [$_SESSION['staff_id']]
+        );
+        if ($userProfile && !empty($userProfile['profile_picture'])) {
+            $profilePicture = $userProfile['profile_picture'];
+        }
+    } catch (Exception $e) {
+        // Silently fail, use session profile picture
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

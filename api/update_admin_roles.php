@@ -21,7 +21,7 @@ if (!isset($data['admin_id']) || !isset($data['roles'])) {
 
 $adminId = (int)$data['admin_id'];
 $newRoles = array_map('trim', array_filter($data['roles']));
-$superAdminId = $_SESSION['id'] ?? null;
+$superAdminId = $_SESSION['user_id'] ?? null;
 
 if (!$superAdminId) {
     http_response_code(400);

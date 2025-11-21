@@ -134,6 +134,47 @@ $availableRoles = [
 <script>
 const availableRoles = <?php echo json_encode($availableRoles); ?>;
 
+function showDialog(title, message, type = 'info') {
+    const dialog = document.createElement('div');
+    dialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[999]';
+    
+    const bgColor = type === 'success' ? 'bg-green-50 dark:bg-green-900' : 
+                   type === 'error' ? 'bg-red-50 dark:bg-red-900' : 
+                   'bg-blue-50 dark:bg-blue-900';
+    
+    const textColor = type === 'success' ? 'text-green-800 dark:text-green-200' : 
+                     type === 'error' ? 'text-red-800 dark:text-red-200' : 
+                     'text-blue-800 dark:text-blue-200';
+    
+    const borderColor = type === 'success' ? 'border-green-400' : 
+                       type === 'error' ? 'border-red-400' : 
+                       'border-blue-400';
+    
+    const icon = type === 'success' ? 'fas fa-check-circle text-green-600' : 
+                type === 'error' ? 'fas fa-exclamation-circle text-red-600' : 
+                'fas fa-info-circle text-blue-600';
+    
+    dialog.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4 border-l-4 ${borderColor}">
+            <div class="flex items-start mb-4">
+                <i class="${icon} text-2xl mr-3"></i>
+                <h3 class="text-lg font-bold text-gray-800 dark:text-white">${title}</h3>
+            </div>
+            <p class="${textColor} mb-6">${message}</p>
+            <div class="flex justify-end">
+                <button onclick="this.closest('.fixed').remove()" class="btn-primary px-4 py-2">OK</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(dialog);
+    dialog.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.remove();
+        }
+    });
+}
+
 function openRoleModal(adminId, adminName) {
     document.getElementById('adminIdInModal').value = adminId;
     document.getElementById('adminNameInModal').textContent = adminName;
@@ -142,6 +183,11 @@ function openRoleModal(adminId, adminName) {
     fetch('api/get_admin_roles.php?admin_id=' + adminId)
         .then(response => response.json())
         .then(data => {
+            if (!data.success) {
+                showDialog('Error', 'Failed to load roles: ' + data.message, 'error');
+                return;
+            }
+            
             const currentRoles = data.roles || [];
             
             // Display current roles
@@ -171,7 +217,7 @@ function openRoleModal(adminId, adminName) {
             document.getElementById('roleModal').classList.remove('hidden');
         })
         .catch(error => {
-            alert('Error loading roles: ' + error);
+            showDialog('Error', 'Failed to load roles. Please try again.', 'error');
         });
 }
 
@@ -203,15 +249,17 @@ function saveRoles() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Roles updated successfully!');
-            closeRoleModal();
-            location.reload();
+            showDialog('Success', 'Roles updated successfully!', 'success');
+            setTimeout(() => {
+                closeRoleModal();
+                location.reload();
+            }, 1500);
         } else {
-            alert('Error: ' + data.message);
+            showDialog('Error', data.message, 'error');
         }
     })
     .catch(error => {
-        alert('Error saving roles: ' + error);
+        showDialog('Error', 'Failed to save roles. Please try again.', 'error');
     });
 }
 

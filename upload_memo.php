@@ -1,6 +1,7 @@
 <?php
 $pageTitle = 'Upload Memo';
 require_once 'includes/head.php';
+require_once 'includes/blur_detection.php';
 
 // Check if user is superadmin
 if ($userRole !== 'superadmin') {

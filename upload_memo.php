@@ -14,11 +14,17 @@ $success = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = sanitize($_POST['title'] ?? '');
     $description = sanitize($_POST['description'] ?? '');
-    $recipient_type = $_POST['recipient_type'] ?? 'all';
-    $recipient_id = $recipient_type === 'single' ? $_POST['recipient_id'] ?? null : null;
+    $recipient_type = sanitize($_POST['recipient_type'] ?? 'all');
+    $recipient_id = null;
+    
+    if ($recipient_type === 'single') {
+        $recipient_id = !empty($_POST['recipient_id']) ? intval($_POST['recipient_id']) : null;
+    }
     
     if (!$title || !isset($_FILES['memo_file'])) {
         $error = 'Title and file are required';
+    } elseif ($recipient_type === 'single' && !$recipient_id) {
+        $error = 'Please select a staff member when sending to a specific person';
     } elseif ($_FILES['memo_file']['error'] !== UPLOAD_ERR_OK) {
         $error = 'File upload failed';
     } else {
@@ -51,20 +57,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     try {
                         $db = Database::getInstance();
                         
-                        // Validate single recipient selection
-                        if ($recipient_type === 'single' && !$recipient_id) {
-                            $error = 'Please select a staff member to send the memo to';
-                            unlink($upload_path);
-                        } else {
-                            // Insert memo
-                            $db->query(
-                                "INSERT INTO memos (sender_id, title, description, file_path, file_type, recipient_type, recipient_id, blur_detected) 
-                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                                [$_SESSION['user_id'], $title, $description, $upload_path, $file_type, $recipient_type, ($recipient_id ?: null), $blur_detected]
-                            );
-                            
-                            $memo_id = $db->getConnection()->lastInsertId();
-                            
+                        // Insert memo
+                        $db->query(
+                            "INSERT INTO memos (sender_id, title, description, file_path, file_type, recipient_type, recipient_id, blur_detected) 
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
+                            [$_SESSION['user_id'], $title, $description, $upload_path, $file_type, $recipient_type, $recipient_id, $blur_detected]
+                        );
+                        
+                        $result = $db->fetchOne(
+                            "SELECT id FROM memos WHERE file_path = ? ORDER BY created_at DESC LIMIT 1",
+                            [$upload_path]
+                        );
+                        $memo_id = $result['id'] ?? null;
+                        
+                        if ($memo_id) {
                             // Add recipients
                             if ($recipient_type === 'all') {
                                 $admins = $db->fetchAll("SELECT id FROM admin_users WHERE is_active = true");
@@ -74,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         [$memo_id, $admin['id']]
                                     );
                                 }
-                            } else {
+                            } else if ($recipient_id) {
                                 $db->query(
                                     "INSERT INTO memo_recipients (memo_id, admin_id) VALUES (?, ?)",
                                     [$memo_id, $recipient_id]
@@ -83,6 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             
                             $success = 'Memo uploaded and sent successfully!';
                             $_POST = [];
+                        } else {
+                            throw new Exception('Failed to retrieve memo ID after insertion');
                         }
                     } catch (Exception $e) {
                         $error = 'Database error: ' . $e->getMessage();

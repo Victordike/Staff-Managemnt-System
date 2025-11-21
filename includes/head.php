@@ -85,6 +85,10 @@ $initials = getInitials($firstname, $lastname);
                         <i class="fas fa-users text-xl w-6"></i>
                         <span class="sidebar-text ml-3">Manage Users</span>
                     </a>
+                    <a href="manage_admin_roles.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_admin_roles.php' ? 'active' : ''; ?>" data-tooltip="Manage Roles">
+                        <i class="fas fa-user-tag text-xl w-6"></i>
+                        <span class="sidebar-text ml-3">Manage Roles</span>
+                    </a>
                 <?php elseif ($userRole === 'admin'): ?>
                     <a href="admin_dashboard.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'admin_dashboard.php' ? 'active' : ''; ?>" data-tooltip="Dashboard">
                         <i class="fas fa-tachometer-alt text-xl w-6"></i>

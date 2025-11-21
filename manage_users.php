@@ -56,6 +56,7 @@ if ($userRole !== 'superadmin') {
             <table class="w-full" id="usersTable">
                 <thead>
                     <tr class="border-b border-gray-200 dark:border-gray-700">
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Photo</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Full Name</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Staff ID</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Email</th>
@@ -189,7 +190,7 @@ function displayUsers(users) {
     if (users.length === 0) {
         tbody.innerHTML = `
             <tr class="border-b border-gray-200 dark:border-gray-700">
-                <td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colspan="8" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                     <i class="fas fa-inbox text-3xl mb-2"></i>
                     <p>No users found</p>
                 </td>
@@ -201,6 +202,11 @@ function displayUsers(users) {
     
     tbody.innerHTML = users.map(user => `
         <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+            <td class="px-6 py-4">
+                <div class="w-10 h-10 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                    ${user.profile_picture && user.profile_picture !== '' ? `<img src="${user.profile_picture}" alt="Profile" class="w-full h-full object-cover">` : `${user.firstname.charAt(0)}${user.surname.charAt(0)}`}
+                </div>
+            </td>
             <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200 font-semibold">
                 ${user.firstname} ${user.surname}
             </td>
@@ -250,7 +256,16 @@ function viewUser(userId) {
     const user = usersData.find(u => u.id === userId);
     if (!user) return;
     
+    const profileImg = user.profile_picture && user.profile_picture !== '' 
+        ? `<img src="${user.profile_picture}" alt="Profile" class="w-full h-full object-cover rounded-lg">`
+        : `<div class="w-full h-32 rounded-lg bg-blue-600 flex items-center justify-center text-white text-4xl font-bold">${user.firstname.charAt(0)}${user.surname.charAt(0)}</div>`;
+    
     const content = `
+        <div class="mb-6">
+            <div class="w-32 h-32">
+                ${profileImg}
+            </div>
+        </div>
         <div class="grid grid-cols-2 gap-4">
             <div><strong class="text-gray-700 dark:text-gray-200">First Name:</strong><p class="text-gray-600 dark:text-gray-400">${user.firstname}</p></div>
             <div><strong class="text-gray-700 dark:text-gray-200">Last Name:</strong><p class="text-gray-600 dark:text-gray-400">${user.surname}</p></div>

@@ -14,7 +14,7 @@ $db = Database::getInstance()->getConnection();
 
 try {
     $stmt = $db->prepare("
-        SELECT id, firstname, surname, staff_id, official_email, position, department, phone_number, is_active, created_at 
+        SELECT id, firstname, surname, staff_id, official_email, position, department, phone_number, is_active, profile_picture, created_at 
         FROM admin_users 
         ORDER BY firstname ASC
     ");

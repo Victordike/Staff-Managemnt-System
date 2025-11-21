@@ -4,6 +4,33 @@ if (session_status() === PHP_SESSION_NONE) {
     @session_start();
 }
 
+// Extract text from Word document (.docx)
+function extractWordDocumentText($file_path) {
+    if (!file_exists($file_path) || !extension_loaded('zip')) {
+        return null;
+    }
+    
+    try {
+        $zip = new ZipArchive();
+        if ($zip->open($file_path) === true) {
+            $xml = $zip->getFromName('word/document.xml');
+            $zip->close();
+            
+            if ($xml === false) return null;
+            
+            // Remove XML tags and decode HTML entities
+            $text = preg_replace('/<[^>]*>/', ' ', $xml);
+            $text = html_entity_decode($text, ENT_XML1, 'UTF-8');
+            $text = preg_replace('/\s+/', ' ', $text); // Normalize whitespace
+            return trim($text);
+        }
+    } catch (Exception $e) {
+        return null;
+    }
+    
+    return null;
+}
+
 function isLoggedIn() {
     return isset($_SESSION['user_id']) && isset($_SESSION['role']);
 }

@@ -102,33 +102,49 @@ if (!$can_view) {
                 </div>
             <?php elseif ($file_type === 'application/pdf'): ?>
                 <!-- PDF Viewer -->
-                <div class="bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+                <div class="bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-4">
                     <embed src="<?php echo htmlspecialchars($file_path); ?>#toolbar=1&navpanes=0&scrollbar=1" 
                            type="application/pdf" 
                            class="w-full" 
                            style="height: 600px;">
                 </div>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
                     <i class="fas fa-info-circle mr-2"></i>If the PDF viewer doesn't load, please <a href="<?php echo htmlspecialchars($file_path); ?>" download class="text-blue-600 dark:text-blue-400 hover:underline">download the file</a>.
                 </p>
             <?php elseif (in_array($file_type, ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])): ?>
-                <!-- Word Document -->
-                <div class="bg-blue-50 dark:bg-blue-900 border-2 border-blue-200 dark:border-blue-700 rounded-lg p-6 text-center">
-                    <i class="fas fa-file-word text-4xl text-blue-600 dark:text-blue-400 mb-3"></i>
-                    <p class="text-gray-700 dark:text-gray-300 font-semibold mb-3">Word Document Preview</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                        <?php 
-                        $type_label = $file_type === 'application/msword' ? 'Microsoft Word 97-2003' : 'Microsoft Word (DOCX)';
-                        echo $type_label;
-                        ?>
-                    </p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                        Word documents cannot be previewed in browser. Please download to view the full document.
-                    </p>
-                    <a href="<?php echo htmlspecialchars($file_path); ?>" download class="btn-primary inline-block">
-                        <i class="fas fa-download mr-2"></i>Download Word Document
-                    </a>
-                </div>
+                <!-- Word Document Text Preview -->
+                <?php 
+                $word_text = null;
+                if ($file_type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                    $word_text = extractWordDocumentText($file_path);
+                }
+                ?>
+                <?php if ($word_text): ?>
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 mb-4 max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700">
+                        <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap text-sm leading-relaxed">
+                            <?php echo htmlspecialchars($word_text); ?>
+                        </p>
+                    </div>
+                    <div class="text-center">
+                        <a href="<?php echo htmlspecialchars($file_path); ?>" download class="btn-secondary inline-block">
+                            <i class="fas fa-download mr-2"></i>Download Full Document
+                        </a>
+                    </div>
+                <?php else: ?>
+                    <div class="bg-blue-50 dark:bg-blue-900 border-2 border-blue-200 dark:border-blue-700 rounded-lg p-6 text-center">
+                        <i class="fas fa-file-word text-4xl text-blue-600 dark:text-blue-400 mb-3"></i>
+                        <p class="text-gray-700 dark:text-gray-300 font-semibold mb-3">Word Document</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                            <?php 
+                            $type_label = $file_type === 'application/msword' ? 'Microsoft Word 97-2003' : 'Microsoft Word (DOCX)';
+                            echo $type_label;
+                            ?>
+                        </p>
+                        <a href="<?php echo htmlspecialchars($file_path); ?>" download class="btn-primary inline-block">
+                            <i class="fas fa-download mr-2"></i>Download Document
+                        </a>
+                    </div>
+                <?php endif; ?>
             <?php else: ?>
                 <!-- Unknown File Type -->
                 <div class="bg-gray-50 dark:bg-gray-900 border-2 border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center">

@@ -88,6 +88,20 @@
   overflow: hidden;
 }
 
+/* Center icons when sidebar is collapsed */
+.sidebar.collapsed .sidebar-link {
+  @apply justify-center px-0;
+}
+
+/* Reduce profile box width when collapsed */
+.sidebar.collapsed > div:nth-child(2) {
+  padding: 1rem 0.5rem;
+}
+
+.sidebar.collapsed > div:nth-child(2) .flex {
+  width: 100%;
+}
+
 /* Tooltip */
 .tooltip {
   position: absolute;

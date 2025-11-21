@@ -86,7 +86,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </button>
             
             <div class="text-center">
-                <a href="index.php" class="text-blue-600 hover:text-blue-800 transition duration-200">
+                <p class="text-gray-600 mb-2">Don't have an account?</p>
+                <a href="superadmin_register.php" class="text-blue-600 hover:text-blue-800 transition duration-200 mb-3 inline-block">
+                    <i class="fas fa-user-plus mr-2"></i>Create Super Admin Account
+                </a>
+            </div>
+            
+            <div class="text-center">
+                <a href="index.php" class="text-gray-600 hover:text-gray-800 transition duration-200">
                     <i class="fas fa-arrow-left mr-2"></i>Back to Home
                 </a>
             </div>

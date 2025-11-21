@@ -38,6 +38,11 @@ if ($userRole !== 'superadmin') {
                 </select>
             </div>
             
+            <!-- Export CSV Button -->
+            <button onclick="exportToCSV()" class="btn-secondary whitespace-nowrap">
+                <i class="fas fa-download mr-2"></i>Export CSV
+            </button>
+            
             <!-- Add New User Button -->
             <button onclick="openAddUserModal()" class="btn-primary whitespace-nowrap">
                 <i class="fas fa-plus mr-2"></i>Add New User
@@ -426,6 +431,11 @@ function showDialog(title, message, type = 'info') {
     dialog.addEventListener('click', function(e) {
         if (e.target === this) this.remove();
     });
+}
+
+// Export users to CSV
+function exportToCSV() {
+    window.location.href = 'api/export_users_csv.php';
 }
 </script>
 

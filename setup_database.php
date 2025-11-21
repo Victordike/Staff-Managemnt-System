@@ -100,6 +100,19 @@ try {
         expires_at TIMESTAMP NOT NULL
     )");
     
+    // Create admin_roles table (for role assignments to admin users)
+    $db->exec("CREATE TABLE IF NOT EXISTS admin_roles (
+        id SERIAL PRIMARY KEY,
+        admin_id INTEGER NOT NULL,
+        role_name VARCHAR(100) NOT NULL,
+        assigned_by INTEGER NOT NULL,
+        assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        removed_at TIMESTAMP,
+        FOREIGN KEY (admin_id) REFERENCES admin_users(id) ON DELETE CASCADE,
+        FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL,
+        UNIQUE(admin_id, role_name)
+    )");
+    
     // Insert default super admin (password: admin123)
     $defaultPassword = password_hash('admin123', PASSWORD_DEFAULT);
     $db->exec("INSERT INTO users (username, email, password, firstname, lastname, role) 

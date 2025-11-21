@@ -5,23 +5,23 @@
 /* Custom Styles */
 @layer components {
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-300 ease-in-out transform hover:scale-105;
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 sm:py-3 sm:px-8 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 text-sm sm:text-base;
   }
   
   .btn-secondary {
-    @apply bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-8 rounded-lg transition duration-300 ease-in-out;
+    @apply bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 sm:py-3 sm:px-8 rounded-lg transition duration-300 ease-in-out text-sm sm:text-base;
   }
   
   .input-field {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+    @apply w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base;
   }
   
   .card {
-    @apply bg-white rounded-lg shadow-lg p-6;
+    @apply bg-white rounded-lg shadow-lg p-4 sm:p-6;
   }
   
   .sidebar-link {
-    @apply flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition duration-200 cursor-pointer rounded-lg;
+    @apply flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition duration-200 cursor-pointer rounded-lg text-sm sm:text-base;
   }
   
   .sidebar-link.active {
@@ -66,7 +66,7 @@
 
 /* Sidebar Styles */
 .sidebar {
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, transform 0.3s ease;
 }
 
 .sidebar.collapsed {
@@ -100,6 +100,30 @@
 
 .sidebar.collapsed > div:nth-child(2) .flex {
   width: 100%;
+}
+
+/* Mobile Responsive Sidebar */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 50;
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.expanded {
+    transform: translateX(0);
+  }
+  
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+  }
+  
+  body.sidebar-open {
+    overflow: hidden;
+  }
 }
 
 /* Tooltip */

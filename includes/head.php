@@ -21,9 +21,12 @@ $initials = getInitials($firstname, $lastname);
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 </head>
 <body class="bg-gray-100">
-    <div class="flex h-screen overflow-hidden">
+    <div class="flex h-screen overflow-hidden relative">
+        <!-- Overlay for mobile drawer -->
+        <div class="md:hidden fixed inset-0 bg-black bg-opacity-50 hidden" id="sidebarOverlay"></div>
+        
         <!-- Sidebar -->
-        <aside id="sidebar" class="sidebar expanded bg-white shadow-xl flex flex-col">
+        <aside id="sidebar" class="sidebar expanded bg-white shadow-xl flex flex-col md:relative">
             <!-- Sidebar Header -->
             <div class="p-4 border-b border-gray-200 flex items-center justify-between">
                 <div class="sidebar-text">
@@ -95,9 +98,9 @@ $initials = getInitials($firstname, $lastname);
         </aside>
         
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col overflow-hidden">
+        <div class="flex-1 flex flex-col overflow-hidden w-full md:w-auto">
             <!-- Top Bar -->
-            <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6">
+            <header class="bg-white shadow-sm h-16 flex items-center justify-between px-3 sm:px-6">
                 <h1 class="text-2xl font-bold text-gray-800"><?php echo $pageTitle ?? 'Dashboard'; ?></h1>
                 <div class="flex items-center gap-4">
                     <div class="text-right">
@@ -108,7 +111,7 @@ $initials = getInitials($firstname, $lastname);
             </header>
             
             <!-- Page Content -->
-            <main class="flex-1 overflow-y-auto p-6">
+            <main class="flex-1 overflow-y-auto p-3 sm:p-6">
                 <?php
                 $flash = getFlashMessage();
                 if ($flash):

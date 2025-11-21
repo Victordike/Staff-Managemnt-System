@@ -70,7 +70,10 @@ try {
                             </p>
                         </div>
                         <div class="flex flex-col gap-2 w-full md:w-auto">
-                            <a href="<?php echo htmlspecialchars($memo['file_path']); ?>" download class="btn-primary text-center text-sm">
+                            <a href="view_memo.php?id=<?php echo $memo['id']; ?>" class="btn-primary text-center text-sm">
+                                <i class="fas fa-eye mr-1"></i>View
+                            </a>
+                            <a href="<?php echo htmlspecialchars($memo['file_path']); ?>" download class="btn-secondary text-center text-sm">
                                 <i class="fas fa-download mr-1"></i>Download
                             </a>
                             <span class="text-xs text-gray-500 dark:text-gray-400 text-center">

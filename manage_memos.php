@@ -130,6 +130,9 @@ try {
                                     <?php echo date('M j, Y', strtotime($memo['created_at'])); ?>
                                 </td>
                                 <td class="px-3 sm:px-4 py-3 text-xs space-x-2">
+                                    <a href="view_memo.php?id=<?php echo $memo['id']; ?>" class="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 transition" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
                                     <a href="<?php echo htmlspecialchars($memo['file_path']); ?>" download class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition" title="Download">
                                         <i class="fas fa-download"></i>
                                     </a>

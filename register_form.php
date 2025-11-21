@@ -28,6 +28,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
+        $profilePicture = null;
+        
+        // Handle file upload
+        if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === UPLOAD_ERR_OK) {
+            $allowed = ['image/jpeg', 'image/png', 'image/gif'];
+            $max_size = 5 * 1024 * 1024; // 5MB
+            
+            if (!in_array($_FILES['profile_picture']['type'], $allowed)) {
+                $error = 'Only JPG, PNG, and GIF files are allowed';
+            } elseif ($_FILES['profile_picture']['size'] > $max_size) {
+                $error = 'File size must not exceed 5MB';
+            } else {
+                $filename = uniqid() . '_' . basename($_FILES['profile_picture']['name']);
+                $upload_path = 'uploads/passport/' . $filename;
+                if (move_uploaded_file($_FILES['profile_picture']['tmp_name'], $upload_path)) {
+                    $profilePicture = $upload_path;
+                }
+            }
+        }
+        
         if (!empty($missing)) {
             $error = 'Please fill in all required fields';
         } elseif ($_POST['password'] !== $_POST['confirm_password']) {
@@ -48,8 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         phone_number, official_email,
                         bank_name, account_name, account_number, pfa_name, pfa_pin,
                         nok_fullname, nok_phone_number, nok_relationship, nok_address,
-                        password, is_active
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        password, is_active, profile_picture
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     [
                         $preUser['staff_id'],
                         $preUser['surname'],
@@ -81,7 +101,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         sanitize($_POST['nok_relationship']),
                         sanitize($_POST['nok_address']),
                         hashPassword($_POST['password']),
-                        true
+                        true,
+                        $profilePicture
                     ]
                 );
                 
@@ -262,10 +283,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
                 
-                <!-- Section E: Next of Kin -->
+                <!-- Section E: Photo/Passport Upload -->
+                <div class="border-l-4 border-indigo-600 pl-4">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-image text-indigo-600 mr-2"></i>E. Passport/Photo
+                    </h2>
+                    <div>
+                        <label class="block text-gray-700 font-semibold mb-2">Upload Passport/Photo (Optional)</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
+                            <p class="text-gray-600 mb-2">Click to select or drag and drop</p>
+                            <input type="file" name="profile_picture" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                            <p class="text-xs text-gray-500 mt-2">JPG, PNG, or GIF (Max 5MB)</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Section F: Next of Kin -->
                 <div class="border-l-4 border-red-600 pl-4">
                     <h2 class="text-xl font-bold text-gray-800 mb-4">
-                        <i class="fas fa-user-friends text-red-600 mr-2"></i>E. Next of Kin (NOK)
+                        <i class="fas fa-user-friends text-red-600 mr-2"></i>F. Next of Kin (NOK)
                     </h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>

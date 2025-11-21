@@ -9,6 +9,22 @@ try {
     $db = Database::getInstance();
     $staffId = $_SESSION['staff_id'];
     
+    // Handle photo upload
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_picture'])) {
+        if ($_FILES['profile_picture']['error'] === UPLOAD_ERR_OK) {
+            $allowed = ['image/jpeg', 'image/png', 'image/gif'];
+            $max_size = 5 * 1024 * 1024;
+            
+            if (in_array($_FILES['profile_picture']['type'], $allowed) && $_FILES['profile_picture']['size'] <= $max_size) {
+                $filename = uniqid() . '_' . basename($_FILES['profile_picture']['name']);
+                $upload_path = 'uploads/profile_pictures/' . $filename;
+                if (move_uploaded_file($_FILES['profile_picture']['tmp_name'], $upload_path)) {
+                    $db->query("UPDATE admin_users SET profile_picture = ? WHERE staff_id = ?", [$upload_path, $staffId]);
+                }
+            }
+        }
+    }
+    
     // Get user profile
     $profile = $db->fetchOne(
         "SELECT * FROM admin_users WHERE staff_id = ?",
@@ -23,8 +39,17 @@ try {
 <!-- Profile Header -->
 <div class="card bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white mb-8 shadow-xl">
     <div class="flex flex-col md:flex-row items-center md:items-start gap-6">
-        <div class="w-32 h-32 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-5xl font-bold">
-            <?php echo htmlspecialchars(getInitials($_SESSION['firstname'], $_SESSION['lastname'])); ?>
+        <div class="relative">
+            <div class="w-32 h-32 rounded-full bg-white bg-opacity-20 flex items-center justify-center text-5xl font-bold overflow-hidden">
+                <?php if ($profile && $profile['profile_picture']): ?>
+                    <img src="<?php echo htmlspecialchars($profile['profile_picture']); ?>" alt="Profile" class="w-full h-full object-cover">
+                <?php else: ?>
+                    <?php echo htmlspecialchars(getInitials($_SESSION['firstname'], $_SESSION['lastname'])); ?>
+                <?php endif; ?>
+            </div>
+            <button onclick="document.getElementById('photoUploadForm').classList.toggle('hidden')" class="absolute bottom-0 right-0 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full">
+                <i class="fas fa-camera"></i>
+            </button>
         </div>
         <div class="flex-1">
             <h1 class="text-4xl font-bold mb-2"><?php echo htmlspecialchars($_SESSION['firstname'] . ' ' . $_SESSION['lastname']); ?></h1>
@@ -45,6 +70,24 @@ try {
             </div>
         </div>
     </div>
+</div>
+
+<!-- Photo Upload Form -->
+<div id="photoUploadForm" class="card mb-8 hidden bg-blue-50 dark:bg-blue-900">
+    <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4">Update Your Photo/Passport</h3>
+    <form method="POST" enctype="multipart/form-data" class="space-y-4">
+        <div>
+            <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Select Photo/Passport</label>
+            <input type="file" name="profile_picture" accept="image/*" class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer" required>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">JPG, PNG, or GIF (Max 5MB)</p>
+        </div>
+        <div class="flex gap-3">
+            <button type="submit" class="btn-primary px-6">
+                <i class="fas fa-upload mr-2"></i>Upload Photo
+            </button>
+            <button type="button" onclick="document.getElementById('photoUploadForm').classList.add('hidden')" class="btn-secondary px-6">Cancel</button>
+        </div>
+    </form>
 </div>
 
 <?php if ($profile): ?>

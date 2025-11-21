@@ -2,8 +2,27 @@
 $pageTitle = 'Manage Users';
 require_once 'includes/head.php';
 
-// Check if user is superadmin
-if ($userRole !== 'superadmin') {
+// Check if user is superadmin or has specific admin roles
+$allowed_roles = ['Rector', 'Bursar', 'Registrar', 'Establishment Unit'];
+$is_authorized = $userRole === 'superadmin';
+
+if ($userRole === 'admin') {
+    // Check if admin has one of the allowed roles
+    try {
+        $db = Database::getInstance();
+        $admin_data = $db->fetchOne(
+            "SELECT position FROM admin_users WHERE id = ?",
+            [$_SESSION['user_id']]
+        );
+        if ($admin_data && in_array($admin_data['position'], $allowed_roles)) {
+            $is_authorized = true;
+        }
+    } catch (Exception $e) {
+        $is_authorized = false;
+    }
+}
+
+if (!$is_authorized) {
     http_response_code(403);
     die('Access denied');
 }

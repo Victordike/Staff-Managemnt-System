@@ -105,6 +105,31 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                         <i class="fas fa-user-tag text-xl w-6"></i>
                         <span class="sidebar-text ml-3">Manage Roles</span>
                     </a>
+                    <?php
+                    // Check if admin user has specific roles for user management
+                    $allowed_admin_roles = ['Rector', 'Bursar', 'Registrar', 'Establishment Unit'];
+                    $can_manage_users = false;
+                    if ($userRole === 'admin') {
+                        try {
+                            $db = Database::getInstance();
+                            $admin_role = $db->fetchOne(
+                                "SELECT position FROM admin_users WHERE id = ?",
+                                [$_SESSION['user_id']]
+                            );
+                            if ($admin_role && in_array($admin_role['position'], $allowed_admin_roles)) {
+                                $can_manage_users = true;
+                            }
+                        } catch (Exception $e) {
+                            $can_manage_users = false;
+                        }
+                    }
+                    ?>
+                    <?php if ($can_manage_users): ?>
+                    <a href="manage_users.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_users.php' ? 'active' : ''; ?>" data-tooltip="Manage Users">
+                        <i class="fas fa-users text-xl w-6"></i>
+                        <span class="sidebar-text ml-3">Manage Users</span>
+                    </a>
+                    <?php endif; ?>
                     <a href="upload_memo.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'upload_memo.php' ? 'active' : ''; ?>" data-tooltip="Upload Memo">
                         <i class="fas fa-envelope text-xl w-6"></i>
                         <span class="sidebar-text ml-3">Upload Memo</span>

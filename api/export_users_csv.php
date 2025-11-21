@@ -2,8 +2,27 @@
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/session.php';
 
-// Check if user is superadmin
-if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'superadmin') {
+// Check if user is superadmin or has specific admin roles
+$allowed_roles = ['Rector', 'Bursar', 'Registrar', 'Establishment Unit'];
+$is_authorized = isset($_SESSION['role']) && $_SESSION['role'] === 'superadmin';
+
+if (!$is_authorized && isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+    require_once __DIR__ . '/../includes/functions.php';
+    try {
+        $db = Database::getInstance();
+        $admin_data = $db->fetchOne(
+            "SELECT position FROM admin_users WHERE id = ?",
+            [$_SESSION['user_id']]
+        );
+        if ($admin_data && in_array($admin_data['position'], $allowed_roles)) {
+            $is_authorized = true;
+        }
+    } catch (Exception $e) {
+        $is_authorized = false;
+    }
+}
+
+if (!$is_authorized) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;

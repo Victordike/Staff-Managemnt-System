@@ -113,6 +113,35 @@ try {
         UNIQUE(admin_id, role_name)
     )");
     
+    // Create memos table
+    $db->exec("CREATE TABLE IF NOT EXISTS memos (
+        id SERIAL PRIMARY KEY,
+        sender_id INTEGER NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        file_path VARCHAR(500) NOT NULL,
+        file_type VARCHAR(50) NOT NULL,
+        recipient_type VARCHAR(20) NOT NULL,
+        recipient_id INTEGER,
+        blur_detected BOOLEAN DEFAULT FALSE,
+        status VARCHAR(20) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (recipient_id) REFERENCES admin_users(id) ON DELETE SET NULL
+    )");
+    
+    // Create memo_recipients table (for tracking who received what memo)
+    $db->exec("CREATE TABLE IF NOT EXISTS memo_recipients (
+        id SERIAL PRIMARY KEY,
+        memo_id INTEGER NOT NULL,
+        admin_id INTEGER NOT NULL,
+        read_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (memo_id) REFERENCES memos(id) ON DELETE CASCADE,
+        FOREIGN KEY (admin_id) REFERENCES admin_users(id) ON DELETE CASCADE,
+        UNIQUE(memo_id, admin_id)
+    )");
+    
     // Insert default super admin (password: admin123)
     $defaultPassword = password_hash('admin123', PASSWORD_DEFAULT);
     $db->exec("INSERT INTO users (username, email, password, firstname, lastname, role) 

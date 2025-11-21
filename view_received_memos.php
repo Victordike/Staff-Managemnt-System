@@ -11,24 +11,31 @@ if ($userRole !== 'admin') {
 try {
     $db = Database::getInstance();
     
-    // Get all memos received by this admin
-    $memos = $db->fetchAll(
-        "SELECT m.*, u.firstname, u.lastname 
-         FROM memos m
-         JOIN memo_recipients mr ON m.id = mr.memo_id
-         JOIN users u ON m.sender_id = u.id
-         WHERE mr.admin_id = ?
-         ORDER BY m.created_at DESC",
-        [$_SESSION['admin_id']]
-    );
+    // Get admin_id from session with fallback to user_id
+    $admin_id = $_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? null;
     
-    // Mark memo as read when viewed
-    if (isset($_GET['memo_id'])) {
-        $memo_id = intval($_GET['memo_id']);
-        $db->query(
-            "UPDATE memo_recipients SET read_at = CURRENT_TIMESTAMP WHERE memo_id = ? AND admin_id = ? AND read_at IS NULL",
-            [$memo_id, $_SESSION['admin_id']]
+    if (!$admin_id) {
+        $memos = [];
+    } else {
+        // Get all memos received by this admin
+        $memos = $db->fetchAll(
+            "SELECT m.*, u.firstname, u.lastname 
+             FROM memos m
+             JOIN memo_recipients mr ON m.id = mr.memo_id
+             JOIN users u ON m.sender_id = u.id
+             WHERE mr.admin_id = ?
+             ORDER BY m.created_at DESC",
+            [$admin_id]
         );
+        
+        // Mark memo as read when viewed
+        if (isset($_GET['memo_id'])) {
+            $memo_id = intval($_GET['memo_id']);
+            $db->query(
+                "UPDATE memo_recipients SET read_at = CURRENT_TIMESTAMP WHERE memo_id = ? AND admin_id = ? AND read_at IS NULL",
+                [$memo_id, $admin_id]
+            );
+        }
     }
 } catch (Exception $e) {
     error_log($e->getMessage());

@@ -29,10 +29,10 @@ function detectBlurInImage($imagePath) {
         imagefilter($image, IMG_FILTER_GRAYSCALE);
         
         // Sample the center region for blur detection
-        $sample_width = min(200, $width / 2);
-        $sample_height = min(200, $height / 2);
-        $start_x = ($width - $sample_width) / 2;
-        $start_y = ($height - $sample_height) / 2;
+        $sample_width = (int)min(200, $width / 2);
+        $sample_height = (int)min(200, $height / 2);
+        $start_x = (int)(($width - $sample_width) / 2);
+        $start_y = (int)(($height - $sample_height) / 2);
         
         // Calculate Laplacian variance (higher = sharper, lower = blurrier)
         $laplacian_variance = calculateLaplacianVariance($image, $start_x, $start_y, $sample_width, $sample_height);
@@ -66,7 +66,7 @@ function calculateLaplacianVariance($image, $start_x, $start_y, $width, $height)
             
             for ($ky = -1; $ky <= 1; $ky++) {
                 for ($kx = -1; $kx <= 1; $kx++) {
-                    $rgb = imagecolorat($image, $x + $kx, $y + $ky);
+                    $rgb = imagecolorat($image, (int)($x + $kx), (int)($y + $ky));
                     $val += (($rgb >> 8) & 0xFF) * $laplacian_kernel[$ky + 1][$kx + 1];
                 }
             }

@@ -33,9 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'File size must not exceed 10MB';
         } else {
             // Check blur for images
-            $blur_detected = false;
+            $blur_detected = 0;
             if (in_array($file_type, ['image/jpeg', 'image/png'])) {
-                $blur_detected = detectBlurInImage($_FILES['memo_file']['tmp_name']);
+                $blur_status = detectBlurInImage($_FILES['memo_file']['tmp_name']);
+                $blur_detected = $blur_status ? 1 : 0;
                 if ($blur_detected) {
                     $error = 'The image text appears too blurry. Please provide a clearer image.';
                 }
@@ -50,33 +51,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     try {
                         $db = Database::getInstance();
                         
-                        // Insert memo
-                        $db->query(
-                            "INSERT INTO memos (sender_id, title, description, file_path, file_type, recipient_type, recipient_id, blur_detected) 
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                            [$_SESSION['user_id'], $title, $description, $upload_path, $file_type, $recipient_type, $recipient_id, $blur_detected]
-                        );
-                        
-                        $memo_id = $db->getConnection()->lastInsertId();
-                        
-                        // Add recipients
-                        if ($recipient_type === 'all') {
-                            $admins = $db->fetchAll("SELECT id FROM admin_users WHERE is_active = true");
-                            foreach ($admins as $admin) {
+                        // Validate single recipient selection
+                        if ($recipient_type === 'single' && !$recipient_id) {
+                            $error = 'Please select a staff member to send the memo to';
+                            unlink($upload_path);
+                        } else {
+                            // Insert memo
+                            $db->query(
+                                "INSERT INTO memos (sender_id, title, description, file_path, file_type, recipient_type, recipient_id, blur_detected) 
+                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                                [$_SESSION['user_id'], $title, $description, $upload_path, $file_type, $recipient_type, ($recipient_id ?: null), $blur_detected]
+                            );
+                            
+                            $memo_id = $db->getConnection()->lastInsertId();
+                            
+                            // Add recipients
+                            if ($recipient_type === 'all') {
+                                $admins = $db->fetchAll("SELECT id FROM admin_users WHERE is_active = true");
+                                foreach ($admins as $admin) {
+                                    $db->query(
+                                        "INSERT INTO memo_recipients (memo_id, admin_id) VALUES (?, ?)",
+                                        [$memo_id, $admin['id']]
+                                    );
+                                }
+                            } else {
                                 $db->query(
                                     "INSERT INTO memo_recipients (memo_id, admin_id) VALUES (?, ?)",
-                                    [$memo_id, $admin['id']]
+                                    [$memo_id, $recipient_id]
                                 );
                             }
-                        } else {
-                            $db->query(
-                                "INSERT INTO memo_recipients (memo_id, admin_id) VALUES (?, ?)",
-                                [$memo_id, $recipient_id]
-                            );
+                            
+                            $success = 'Memo uploaded and sent successfully!';
+                            $_POST = [];
                         }
-                        
-                        $success = 'Memo uploaded and sent successfully!';
-                        $_POST = [];
                     } catch (Exception $e) {
                         $error = 'Database error: ' . $e->getMessage();
                         unlink($upload_path);

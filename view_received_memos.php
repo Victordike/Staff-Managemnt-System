@@ -19,7 +19,7 @@ try {
     } else {
         // Get all memos received by this admin
         $memos = $db->fetchAll(
-            "SELECT m.*, u.firstname, u.lastname 
+            "SELECT m.*, u.firstname, u.lastname, mr.read_at
              FROM memos m
              JOIN memo_recipients mr ON m.id = mr.memo_id
              JOIN users u ON m.sender_id = u.id
@@ -62,7 +62,7 @@ try {
                         <div class="flex-1">
                             <div class="flex items-center gap-3 mb-2">
                                 <h3 class="text-xl font-bold text-gray-800 dark:text-white"><?php echo htmlspecialchars($memo['title']); ?></h3>
-                                <?php if (!$memo['read_at']): ?>
+                                <?php if (isset($memo['read_at']) && !$memo['read_at']): ?>
                                     <span class="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-semibold rounded-full">New</span>
                                 <?php endif; ?>
                             </div>

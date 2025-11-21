@@ -19,9 +19,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
             throw new Exception('CSV file is empty or invalid');
         }
         
-        $db = Database::getInstance();
+        $db = Database::getInstance()->getConnection();
         $imported = 0;
         $skipped = 0;
+        $alreadyRegistered = 0;
+        $importDetails = [];
         
         foreach ($csvData as $row) {
             // Validate required fields
@@ -30,37 +32,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                 continue;
             }
             
+            $staffId = $row['Staff ID'];
+            
             try {
-                $db->query(
-                    "INSERT INTO pre_users (surname, firstname, othername, staff_id, salary_structure, gl, step, rank) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                     ON CONFLICT (staff_id) DO UPDATE SET
-                     surname = EXCLUDED.surname,
-                     firstname = EXCLUDED.firstname,
-                     othername = EXCLUDED.othername,
-                     salary_structure = EXCLUDED.salary_structure,
-                     gl = EXCLUDED.gl,
-                     step = EXCLUDED.step,
-                     rank = EXCLUDED.rank",
-                    [
+                // Check if already registered as admin user
+                $existingAdmin = $db->prepare("SELECT id FROM admin_users WHERE staff_id = ?");
+                $existingAdmin->execute([$staffId]);
+                if ($existingAdmin->fetch()) {
+                    $alreadyRegistered++;
+                    $importDetails[] = "⊘ {$row['Firstname']} {$row['Surname']} (ID: {$staffId}) - Already registered";
+                    continue;
+                }
+                
+                // Check if exists in pre_users
+                $existingPre = $db->prepare("SELECT id FROM pre_users WHERE staff_id = ?");
+                $existingPre->execute([$staffId]);
+                $exists = $existingPre->fetch();
+                
+                if ($exists) {
+                    // Update existing record
+                    $updateStmt = $db->prepare(
+                        "UPDATE pre_users SET 
+                         surname = ?, firstname = ?, othername = ?, 
+                         salary_structure = ?, gl = ?, step = ?, rank = ?
+                         WHERE staff_id = ?"
+                    );
+                    $updateStmt->execute([
                         $row['Surname'] ?? '',
                         $row['Firstname'] ?? '',
                         $row['Othername'] ?? '',
-                        $row['Staff ID'],
+                        $row['Salary Structure'] ?? '',
+                        $row['GL'] ?? '',
+                        $row['STEP'] ?? '',
+                        $row['Rank'] ?? '',
+                        $staffId
+                    ]);
+                    $importDetails[] = "↻ {$row['Firstname']} {$row['Surname']} (ID: {$staffId}) - Updated";
+                } else {
+                    // Insert new record
+                    $insertStmt = $db->prepare(
+                        "INSERT INTO pre_users (surname, firstname, othername, staff_id, salary_structure, gl, step, rank) 
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                    );
+                    $insertStmt->execute([
+                        $row['Surname'] ?? '',
+                        $row['Firstname'] ?? '',
+                        $row['Othername'] ?? '',
+                        $staffId,
                         $row['Salary Structure'] ?? '',
                         $row['GL'] ?? '',
                         $row['STEP'] ?? '',
                         $row['Rank'] ?? ''
-                    ]
-                );
+                    ]);
+                    $importDetails[] = "✓ {$row['Firstname']} {$row['Surname']} (ID: {$staffId}) - Added";
+                }
                 $imported++;
             } catch (Exception $e) {
                 $skipped++;
+                $importDetails[] = "✗ {$row['Firstname']} {$row['Surname']} (ID: {$staffId}) - Error: " . $e->getMessage();
                 error_log("Error importing row: " . $e->getMessage());
             }
         }
         
-        $success = "CSV imported successfully! $imported records imported, $skipped skipped.";
+        $successMessage = "CSV import completed!<br>";
+        $successMessage .= "✓ Records processed: <strong>$imported</strong><br>";
+        $successMessage .= "⊘ Already registered: <strong>$alreadyRegistered</strong><br>";
+        $successMessage .= "⊗ Skipped: <strong>$skipped</strong>";
+        
+        if (count($importDetails) > 0 && count($importDetails) <= 20) {
+            $successMessage .= "<br><br><strong>Import Details:</strong><br><div style='max-height: 300px; overflow-y: auto; background: #f0f0f0; padding: 10px; border-radius: 5px; font-size: 12px;'>";
+            $successMessage .= implode("<br>", array_slice($importDetails, 0, 20));
+            if (count($importDetails) > 20) {
+                $successMessage .= "<br>... and " . (count($importDetails) - 20) . " more";
+            }
+            $successMessage .= "</div>";
+        }
+        
+        $success = $successMessage;
     } catch (Exception $e) {
         $error = $e->getMessage();
         error_log("CSV upload error: " . $e->getMessage());
@@ -87,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
         <?php if ($success): ?>
             <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4">
                 <i class="fas fa-check-circle mr-2"></i>
-                <?php echo htmlspecialchars($success); ?>
+                <?php echo $success; ?>
             </div>
         <?php endif; ?>
         

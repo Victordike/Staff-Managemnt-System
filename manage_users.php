@@ -17,35 +17,35 @@ if ($userRole !== 'superadmin') {
 
     <!-- Controls Bar -->
     <div class="card mb-6">
-        <div class="flex flex-col md:flex-row gap-4 mb-4">
+        <div class="flex flex-col sm:grid sm:grid-cols-2 lg:flex lg:flex-row gap-2 md:gap-4 mb-4">
             <!-- Search Box -->
-            <div class="flex-1">
+            <div class="sm:col-span-2 lg:flex-1">
                 <div class="relative">
                     <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                    <input type="text" id="searchInput" placeholder="Search by name, email, staff ID..." 
-                           class="input-field pl-10 w-full" onkeyup="filterTable()">
+                    <input type="text" id="searchInput" placeholder="Search users..." 
+                           class="input-field pl-10 w-full text-sm" onkeyup="filterTable()">
                 </div>
             </div>
             
             <!-- Sort Dropdown -->
-            <div>
-                <select id="sortBy" onchange="sortTable()" class="input-field">
+            <div class="sm:col-span-1">
+                <select id="sortBy" onchange="sortTable()" class="input-field w-full text-sm">
                     <option value="name">Sort by Name</option>
                     <option value="email">Sort by Email</option>
-                    <option value="position">Sort by Position</option>
-                    <option value="department">Sort by Department</option>
-                    <option value="date">Sort by Date (Newest)</option>
+                    <option value="position">Position</option>
+                    <option value="department">Department</option>
+                    <option value="date">Newest</option>
                 </select>
             </div>
             
             <!-- Export CSV Button -->
-            <button onclick="exportToCSV()" class="btn-secondary whitespace-nowrap">
-                <i class="fas fa-download mr-2"></i>Export CSV
+            <button onclick="exportToCSV()" class="btn-secondary whitespace-nowrap text-sm py-2" title="Export">
+                <i class="fas fa-download mr-1"></i><span class="hidden sm:inline">Export</span>
             </button>
             
             <!-- Add New User Button -->
-            <button onclick="openAddUserModal()" class="btn-primary whitespace-nowrap">
-                <i class="fas fa-plus mr-2"></i>Add New User
+            <button onclick="openAddUserModal()" class="btn-primary whitespace-nowrap text-sm py-2" title="Add">
+                <i class="fas fa-plus mr-1"></i><span class="hidden sm:inline">Add</span>
             </button>
         </div>
         
@@ -58,17 +58,17 @@ if ($userRole !== 'superadmin') {
     <!-- Users Table -->
     <div class="card">
         <div class="overflow-x-auto">
-            <table class="w-full" id="usersTable">
+            <table class="w-full text-xs sm:text-sm" id="usersTable">
                 <thead>
-                    <tr class="border-b border-gray-200 dark:border-gray-700">
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Photo</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Full Name</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Staff ID</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Email</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Position</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Department</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Status</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Actions</th>
+                    <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                        <th class="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-gray-700 dark:text-gray-200">Photo</th>
+                        <th class="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-gray-700 dark:text-gray-200">Name</th>
+                        <th class="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-gray-700 dark:text-gray-200 hidden md:table-cell">Staff ID</th>
+                        <th class="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-gray-700 dark:text-gray-200 hidden lg:table-cell">Email</th>
+                        <th class="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-gray-700 dark:text-gray-200 hidden xl:table-cell">Position</th>
+                        <th class="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-gray-700 dark:text-gray-200 hidden xl:table-cell">Dept</th>
+                        <th class="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-gray-700 dark:text-gray-200">Status</th>
+                        <th class="px-2 sm:px-4 py-2 sm:py-3 text-left font-semibold text-gray-700 dark:text-gray-200">Act</th>
                     </tr>
                 </thead>
                 <tbody id="usersTableBody">
@@ -84,19 +84,19 @@ if ($userRole !== 'superadmin') {
 </div>
 
 <!-- Add/Edit User Modal -->
-<div id="userModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+<div id="userModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-2 sm:p-4">
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex justify-between items-center">
-            <h3 class="text-xl font-bold text-gray-800 dark:text-white" id="modalTitle">Add New User</h3>
+        <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-3 sm:p-6 flex justify-between items-center">
+            <h3 class="text-lg sm:text-xl font-bold text-gray-800 dark:text-white" id="modalTitle">Add New User</h3>
             <button onclick="closeUserModal()" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                <i class="fas fa-times text-2xl"></i>
+                <i class="fas fa-times text-xl sm:text-2xl"></i>
             </button>
         </div>
         
-        <form id="userForm" class="p-6 space-y-4">
+        <form id="userForm" class="p-3 sm:p-6 space-y-4">
             <input type="hidden" id="userId" value="">
             
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">First Name *</label>
                     <input type="text" id="firstName" class="input-field" required>
@@ -207,31 +207,31 @@ function displayUsers(users) {
     
     tbody.innerHTML = users.map(user => `
         <tr class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-            <td class="px-6 py-4">
-                <div class="w-30 h-30 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center text-white font-bold text-lg">
+            <td class="px-2 sm:px-4 py-2 sm:py-4">
+                <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-blue-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
                     ${user.profile_picture && user.profile_picture !== '' ? `<img src="${user.profile_picture}" alt="Profile" class="w-full h-full object-cover">` : `${user.firstname.charAt(0)}${user.surname.charAt(0)}`}
                 </div>
             </td>
-            <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200 font-semibold">
-                ${user.firstname} ${user.surname}
+            <td class="px-2 sm:px-4 py-2 sm:py-4 text-gray-800 dark:text-gray-200 font-semibold text-xs sm:text-sm">
+                ${user.firstname}<br/><span class="text-xs text-gray-500 dark:text-gray-400">${user.surname}</span>
             </td>
-            <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">${user.staff_id}</td>
-            <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">${user.official_email}</td>
-            <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">${user.position}</td>
-            <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">${user.department}</td>
-            <td class="px-6 py-4 text-sm">
-                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${user.is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}">
-                    ${user.is_active ? 'Active' : 'Inactive'}
+            <td class="px-2 sm:px-4 py-2 sm:py-4 text-gray-800 dark:text-gray-200 hidden md:table-cell text-xs">${user.staff_id}</td>
+            <td class="px-2 sm:px-4 py-2 sm:py-4 text-gray-800 dark:text-gray-200 hidden lg:table-cell text-xs">${user.official_email}</td>
+            <td class="px-2 sm:px-4 py-2 sm:py-4 text-gray-800 dark:text-gray-200 hidden xl:table-cell text-xs">${user.position}</td>
+            <td class="px-2 sm:px-4 py-2 sm:py-4 text-gray-800 dark:text-gray-200 hidden xl:table-cell text-xs">${user.department}</td>
+            <td class="px-2 sm:px-4 py-2 sm:py-4 text-xs">
+                <span class="inline-block px-2 py-1 rounded-full text-xs font-semibold ${user.is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}">
+                    ${user.is_active ? 'On' : 'Off'}
                 </span>
             </td>
-            <td class="px-6 py-4 text-sm space-x-2">
-                <button onclick="viewUser(${user.id})" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition">
+            <td class="px-2 sm:px-4 py-2 sm:py-4 text-xs space-x-1">
+                <button onclick="viewUser(${user.id})" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition" title="View">
                     <i class="fas fa-eye"></i>
                 </button>
-                <button onclick="editUser(${user.id})" class="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition">
+                <button onclick="editUser(${user.id})" class="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition" title="Edit">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button onclick="deleteUser(${user.id})" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition">
+                <button onclick="deleteUser(${user.id})" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition" title="Delete">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>

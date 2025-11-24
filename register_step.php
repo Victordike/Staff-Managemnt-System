@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Create new record with personal data
                         $db->query(
                             "INSERT INTO admin_users (staff_id, surname, firstname, date_of_birth, sex, marital_status, permanent_home_address, lga_origin, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                            [$preUser['staff_id'], $preUser['surname'], $preUser['firstname'], $personal_data['dob'], $personal_data['sex'], $personal_data['marital_status'], $personal_data['address'], $personal_data['lga'], false]
+                            [$preUser['staff_id'], $preUser['surname'], $preUser['firstname'], $personal_data['dob'], $personal_data['sex'], $personal_data['marital_status'], $personal_data['address'], $personal_data['lga'], 0]
                         );
                         $existingData = $db->fetchOne("SELECT * FROM admin_users WHERE staff_id = ?", [$preUser['staff_id']]);
                     }
@@ -170,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Complete registration - update password and set active
                     $db->query(
                         "UPDATE admin_users SET password = ?, profile_picture = ?, is_active = ? WHERE staff_id = ?",
-                        [hashPassword($_POST['password']), $profilePicture, true, $preUser['staff_id']]
+                        [hashPassword($_POST['password']), $profilePicture, 1, $preUser['staff_id']]
                     );
                     
                     // Cleanup session

@@ -552,7 +552,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-gray-700 font-semibold mb-2">Profile Picture (JPG, PNG, GIF - Max 5MB)</label>
-                                <input type="file" name="profile_picture" class="input-field" accept="image/*">
+                                <input type="file" id="profilePictureInput" name="profile_picture" class="input-field" accept="image/*">
+                                <div id="previewContainer" class="mt-4 hidden">
+                                    <p class="text-gray-600 font-semibold mb-2">Preview:</p>
+                                    <img id="profilePreview" src="" alt="Profile Preview" class="w-48 h-48 object-cover rounded-lg border-2 border-gray-300 shadow-lg">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -587,5 +591,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
         </div>
     </div>
+    
+    <script>
+        // Image preview functionality
+        const profilePictureInput = document.getElementById('profilePictureInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const profilePreview = document.getElementById('profilePreview');
+        
+        if (profilePictureInput) {
+            profilePictureInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                
+                if (file) {
+                    // Validate file type
+                    if (!file.type.startsWith('image/')) {
+                        alert('Please select a valid image file');
+                        this.value = '';
+                        previewContainer.classList.add('hidden');
+                        return;
+                    }
+                    
+                    // Validate file size (5MB max)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('File size must not exceed 5MB');
+                        this.value = '';
+                        previewContainer.classList.add('hidden');
+                        return;
+                    }
+                    
+                    // Read and display the file
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        profilePreview.src = event.target.result;
+                        previewContainer.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    previewContainer.classList.add('hidden');
+                }
+            });
+        }
+    </script>
 </body>
 </html>

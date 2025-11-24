@@ -119,7 +119,7 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                     <button id="cancelBtn" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition">
                         Cancel
                     </button>
-                    <button id="confirmBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold">
+                    <button id="confirmBtn" class="px-4 py-2 bg-red-600 dark:bg-red-500 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition font-semibold">
                         Confirm
                     </button>
                 </div>
@@ -177,7 +177,7 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                     
                     <!-- User Management Accordion -->
                     <div class="accordion-item">
-                        <button class="sidebar-link accordion-toggle" onclick="toggleAccordion(this)">
+                        <button class="sidebar-link accordion-toggle" onclick="toggleAccordion(this)" data-tooltip="User Management">
                             <i class="fas fa-users text-xl w-6"></i>
                             <span class="sidebar-text ml-3">User Management</span>
                             <i class="fas fa-chevron-down text-xs ml-auto accordion-icon"></i>
@@ -200,7 +200,7 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                     
                     <!-- Memo Management Accordion -->
                     <div class="accordion-item">
-                        <button class="sidebar-link accordion-toggle" onclick="toggleAccordion(this)">
+                        <button class="sidebar-link accordion-toggle" onclick="toggleAccordion(this)" data-tooltip="Memo System">
                             <i class="fas fa-envelope text-xl w-6"></i>
                             <span class="sidebar-text ml-3">Memo System</span>
                             <i class="fas fa-chevron-down text-xs ml-auto accordion-icon"></i>
@@ -228,7 +228,7 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                     
                     <!-- Memo Management Accordion -->
                     <div class="accordion-item">
-                        <button class="sidebar-link accordion-toggle" onclick="toggleAccordion(this)">
+                        <button class="sidebar-link accordion-toggle" onclick="toggleAccordion(this)" data-tooltip="Memos">
                             <i class="fas fa-envelope text-xl w-6"></i>
                             <span class="sidebar-text ml-3">Memos</span>
                             <i class="fas fa-chevron-down text-xs ml-auto accordion-icon"></i>

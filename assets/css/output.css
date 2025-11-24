@@ -117,3 +117,34 @@
     position: absolute;
     right: 1rem;
 }
+
+/* Sidebar Profile Section Collapsed/Expanded States */
+.sidebar.collapsed .sidebar-text {
+    display: none !important;
+}
+
+.sidebar.collapsed .collapsed-text {
+    display: block !important;
+}
+
+.sidebar.expanded .collapsed-text {
+    display: none !important;
+}
+
+.sidebar.expanded .sidebar-text {
+    display: block !important;
+}
+
+/* Profile icon badge styling */
+.sidebar.collapsed .collapsed-text:not(.hidden) {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

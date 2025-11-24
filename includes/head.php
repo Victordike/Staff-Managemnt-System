@@ -177,13 +177,20 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
             <!-- Profile Section -->
             <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex flex-col items-center">
-                    <div class="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold mb-3">
+                    <!-- Profile Avatar -->
+                    <div class="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold mb-3 relative">
                         <?php if ($profilePicture && file_exists($profilePicture)): ?>
                             <img src="<?php echo htmlspecialchars($profilePicture); ?>" alt="Profile" class="w-full h-full rounded-full object-cover">
                         <?php else: ?>
                             <?php echo htmlspecialchars($initials); ?>
                         <?php endif; ?>
+                        <!-- Profile Icon (appears on collapsed sidebar) -->
+                        <div class="collapsed-text hidden absolute -bottom-1 -right-1 bg-blue-600 rounded-full p-2 text-white text-lg border-2 border-white dark:border-gray-800">
+                            <i class="fas fa-user"></i>
+                        </div>
                     </div>
+                    
+                    <!-- Expanded View (hidden when collapsed) -->
                     <div class="sidebar-text text-center">
                         <h3 class="font-semibold text-gray-800 dark:text-white"><?php echo htmlspecialchars($fullname); ?></h3>
                         <p class="text-sm text-gray-600 dark:text-gray-300 capitalize"><?php echo htmlspecialchars($userRole); ?></p>
@@ -197,6 +204,12 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                             <i class="fas fa-user-circle mr-1"></i>Profile
                         </a>
                     <?php endif; ?>
+                    
+                    <!-- Collapsed View (shown when collapsed) -->
+                    <div class="collapsed-text hidden text-center mt-2">
+                        <div class="text-xs font-bold text-gray-800 dark:text-white"><?php echo htmlspecialchars($initials); ?></div>
+                        <div class="text-xs text-gray-600 dark:text-gray-300 capitalize mt-1"><?php echo htmlspecialchars($userRole); ?></div>
+                    </div>
                 </div>
             </div>
             

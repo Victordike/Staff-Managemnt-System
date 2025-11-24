@@ -27,12 +27,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $db = Database::getInstance();
         
-        // Determine action
-        if (isset($_POST['save_continue'])) {
-            // Validate and save current step to session
+        $saveOnly = isset($_POST['save_only']);
+        $moveNext = isset($_POST['next_step']);
+        $movePrev = isset($_POST['prev_step']);
+        
+        if ($saveOnly || $moveNext) {
+            // Save current step data
             switch ($currentStep) {
                 case 1:
-                    // Personal Data validation
                     if (empty($_POST['dob']) || empty($_POST['sex']) || empty($_POST['marital_status']) || empty($_POST['address']) || empty($_POST['lga'])) {
                         $error = 'Please fill in all personal data fields';
                         break;
@@ -44,13 +46,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'address' => sanitize($_POST['address']),
                         'lga' => sanitize($_POST['lga']),
                     ];
-                    $_SESSION['registration_step'] = 2;
-                    $success = 'Personal data saved! Proceed to next section.';
-                    header('Refresh: 2; url=register_step.php');
+                    $success = 'Personal data saved!';
+                    if ($moveNext) {
+                        $_SESSION['registration_step'] = 2;
+                        header('Refresh: 2; url=register_step.php');
+                    }
                     break;
                     
                 case 2:
-                    // Employment Information validation
                     if (empty($_POST['department']) || empty($_POST['position']) || empty($_POST['employment_type']) || empty($_POST['assumption_date']) || empty($_POST['cadre']) || empty($_POST['phone']) || empty($_POST['email'])) {
                         $error = 'Please fill in all employment information fields';
                         break;
@@ -64,13 +67,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'phone' => sanitize($_POST['phone']),
                         'email' => sanitize($_POST['email']),
                     ];
-                    $_SESSION['registration_step'] = 3;
-                    $success = 'Employment information saved! Proceed to next section.';
-                    header('Refresh: 2; url=register_step.php');
+                    $success = 'Employment information saved!';
+                    if ($moveNext) {
+                        $_SESSION['registration_step'] = 3;
+                        header('Refresh: 2; url=register_step.php');
+                    }
                     break;
                     
                 case 3:
-                    // Banking Details validation
                     if (empty($_POST['bank_name']) || empty($_POST['account_name']) || empty($_POST['account_number']) || empty($_POST['pfa_name']) || empty($_POST['pfa_pin'])) {
                         $error = 'Please fill in all banking details fields';
                         break;
@@ -82,13 +86,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'pfa_name' => sanitize($_POST['pfa_name']),
                         'pfa_pin' => sanitize($_POST['pfa_pin']),
                     ];
-                    $_SESSION['registration_step'] = 4;
-                    $success = 'Banking details saved! Proceed to next section.';
-                    header('Refresh: 2; url=register_step.php');
+                    $success = 'Banking details saved!';
+                    if ($moveNext) {
+                        $_SESSION['registration_step'] = 4;
+                        header('Refresh: 2; url=register_step.php');
+                    }
                     break;
                     
                 case 4:
-                    // NOK Details validation
                     if (empty($_POST['nok_name']) || empty($_POST['nok_phone']) || empty($_POST['nok_relationship']) || empty($_POST['nok_address'])) {
                         $error = 'Please fill in all NOK details fields';
                         break;
@@ -99,13 +104,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'nok_relationship' => sanitize($_POST['nok_relationship']),
                         'nok_address' => sanitize($_POST['nok_address']),
                     ];
-                    $_SESSION['registration_step'] = 5;
-                    $success = 'NOK details saved! Complete your registration.';
-                    header('Refresh: 2; url=register_step.php');
+                    $success = 'NOK details saved!';
+                    if ($moveNext) {
+                        $_SESSION['registration_step'] = 5;
+                        header('Refresh: 2; url=register_step.php');
+                    }
                     break;
                     
                 case 5:
-                    // Final submission - complete registration
                     if (empty($_POST['password']) || empty($_POST['confirm_password'])) {
                         $error = 'Please enter a password';
                         break;
@@ -138,13 +144,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
                     
-                    // Merge all session data
                     $personal = $_SESSION['personal_data'] ?? [];
                     $employment = $_SESSION['employment_data'] ?? [];
                     $banking = $_SESSION['banking_data'] ?? [];
                     $nok = $_SESSION['nok_data'] ?? [];
                     
-                    // Insert into database - NOW with all required fields
                     $db->query(
                         "INSERT INTO admin_users (
                             staff_id, surname, firstname,
@@ -186,7 +190,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ]
                     );
                     
-                    // Cleanup session
                     unset($_SESSION['pre_user']);
                     unset($_SESSION['registration_step']);
                     unset($_SESSION['personal_data']);
@@ -198,7 +201,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     header('Refresh: 2; url=admin_login.php');
                     break;
             }
-        } elseif (isset($_POST['prev_step'])) {
+        } elseif ($movePrev) {
             if ($currentStep > 1) {
                 $_SESSION['registration_step'] = $currentStep - 1;
                 header('Location: register_step.php');
@@ -437,19 +440,23 @@ $nok = $_SESSION['nok_data'] ?? [];
                 <?php endif; ?>
                 
                 <!-- Navigation Buttons -->
-                <div class="flex gap-4 pt-6 border-t">
+                <div class="flex gap-3 pt-6 border-t">
                     <?php if ($currentStep > 1): ?>
                         <button type="submit" name="prev_step" class="btn-secondary flex-1" formnovalidate>
                             <i class="fas fa-arrow-left mr-2"></i>Previous
                         </button>
                     <?php endif; ?>
                     
+                    <button type="submit" name="save_only" class="btn-secondary flex-1" style="background-color: #6366f1; color: white; border: none;">
+                        <i class="fas fa-save mr-2"></i>Save
+                    </button>
+                    
                     <?php if ($currentStep < count($steps)): ?>
-                        <button type="submit" name="save_continue" class="btn-primary flex-1">
-                            Save & Continue <i class="fas fa-arrow-right ml-2"></i>
+                        <button type="submit" name="next_step" class="btn-primary flex-1">
+                            Next <i class="fas fa-arrow-right ml-2"></i>
                         </button>
                     <?php else: ?>
-                        <button type="submit" name="save_continue" class="btn-primary flex-1">
+                        <button type="submit" name="next_step" class="btn-primary flex-1">
                             <i class="fas fa-check-circle mr-2"></i>Complete Registration
                         </button>
                     <?php endif; ?>

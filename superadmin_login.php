@@ -78,9 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="password" class="block text-gray-700 font-semibold mb-2">
                     <i class="fas fa-lock mr-2"></i>Password
                 </label>
-                <div class="relative">
+                <div class="relative flex items-center">
                     <input type="password" id="password" name="password" class="input-field w-full pr-10" placeholder="Enter your password" required>
-                    <button type="button" class="absolute right-3 top-3 text-gray-600 hover:text-gray-800 transition" onclick="togglePasswordVisibility('password')">
+                    <button type="button" class="absolute right-3 text-gray-600 hover:text-gray-800 transition" onclick="togglePasswordVisibility('password')">
                         <i class="fas fa-eye" id="passwordToggle"></i>
                     </button>
                 </div>

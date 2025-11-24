@@ -7,17 +7,17 @@ class Database {
     
     private function __construct() {
         try {
-            $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+            // Connect to PostgreSQL database
+            $dsn = "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME;
             $this->conn = new PDO($dsn, DB_USER, DB_PASS, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_TIMEOUT => 10
             ]);
         } catch(PDOException $e) {
             // Log detailed error for debugging
             error_log("Database Connection Error: " . $e->getMessage());
-            error_log("DSN: mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME);
-            die("Connection failed: Unable to connect to database. Please ensure MySQL is running and configuration is correct.\n\nError: " . $e->getMessage());
+            error_log("DSN: pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME);
+            die("Connection failed: Unable to connect to PostgreSQL database.\n\nError: " . $e->getMessage());
         }
     }
     

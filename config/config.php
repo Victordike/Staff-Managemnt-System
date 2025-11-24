@@ -1,10 +1,10 @@
 <?php
-// Database configuration for Local XAMPP MySQL
-define('DB_HOST', '127.0.0.1');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'fpog_sms');
-define('DB_PORT', '3306');
+// Database configuration for Replit PostgreSQL
+define('DB_HOST', getenv('PGHOST') ?: 'localhost');
+define('DB_USER', getenv('PGUSER') ?: 'postgres');
+define('DB_PASS', getenv('PGPASSWORD') ?: '');
+define('DB_NAME', getenv('PGDATABASE') ?: 'fpog_sms');
+define('DB_PORT', getenv('PGPORT') ?: '5432');
 
 // Application configuration
 define('SITE_NAME', 'Staff Management System');

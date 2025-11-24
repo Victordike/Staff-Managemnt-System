@@ -41,6 +41,43 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
         if (theme === 'dark') {
             document.documentElement.classList.add('dark');
         }
+        
+        // Accordion toggle function
+        function toggleAccordion(button) {
+            const content = button.nextElementSibling;
+            const isOpen = content.classList.contains('open');
+            
+            // Close all accordion items
+            document.querySelectorAll('.accordion-content').forEach(item => {
+                item.classList.remove('open');
+            });
+            document.querySelectorAll('.accordion-toggle').forEach(toggle => {
+                toggle.classList.remove('active');
+            });
+            
+            // Open clicked accordion if it wasn't open
+            if (!isOpen) {
+                content.classList.add('open');
+                button.classList.add('active');
+            }
+        }
+        
+        // Auto-open accordion if current page is in it
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPage = '<?php echo basename($_SERVER['PHP_SELF']); ?>';
+            const activeLinks = document.querySelectorAll('.accordion-link.active');
+            
+            activeLinks.forEach(link => {
+                const content = link.closest('.accordion-content');
+                if (content) {
+                    const toggle = content.previousElementSibling;
+                    if (toggle && toggle.classList.contains('accordion-toggle')) {
+                        content.classList.add('open');
+                        toggle.classList.add('active');
+                    }
+                }
+            });
+        });
     </script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-950 transition-colors duration-300">
@@ -93,51 +130,48 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                         <i class="fas fa-tachometer-alt text-xl w-6"></i>
                         <span class="sidebar-text ml-3">Dashboard</span>
                     </a>
-                    <a href="upload_csv.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'upload_csv.php' ? 'active' : ''; ?>" data-tooltip="Upload CSV">
-                        <i class="fas fa-file-upload text-xl w-6"></i>
-                        <span class="sidebar-text ml-3">Upload CSV</span>
-                    </a>
-                    <a href="manage_users.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_users.php' ? 'active' : ''; ?>" data-tooltip="Manage Users">
-                        <i class="fas fa-users text-xl w-6"></i>
-                        <span class="sidebar-text ml-3">Manage Users</span>
-                    </a>
-                    <a href="manage_admin_roles.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_admin_roles.php' ? 'active' : ''; ?>" data-tooltip="Manage Roles">
-                        <i class="fas fa-user-tag text-xl w-6"></i>
-                        <span class="sidebar-text ml-3">Manage Roles</span>
-                    </a>
-                    <?php
-                    // Check if admin user has specific roles for user management
-                    $allowed_admin_roles = ['Rector', 'Bursar', 'Registrar', 'Establishment Unit'];
-                    $can_manage_users = false;
-                    if ($userRole === 'admin') {
-                        try {
-                            $db = Database::getInstance();
-                            $admin_role = $db->fetchOne(
-                                "SELECT position FROM admin_users WHERE id = ?",
-                                [$_SESSION['user_id']]
-                            );
-                            if ($admin_role && in_array($admin_role['position'], $allowed_admin_roles)) {
-                                $can_manage_users = true;
-                            }
-                        } catch (Exception $e) {
-                            $can_manage_users = false;
-                        }
-                    }
-                    ?>
-                    <?php if ($can_manage_users): ?>
-                    <a href="manage_users.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_users.php' ? 'active' : ''; ?>" data-tooltip="Manage Users">
-                        <i class="fas fa-users text-xl w-6"></i>
-                        <span class="sidebar-text ml-3">Manage Users</span>
-                    </a>
-                    <?php endif; ?>
-                    <a href="upload_memo.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'upload_memo.php' ? 'active' : ''; ?>" data-tooltip="Upload Memo">
-                        <i class="fas fa-envelope text-xl w-6"></i>
-                        <span class="sidebar-text ml-3">Upload Memo</span>
-                    </a>
-                    <a href="manage_memos.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_memos.php' ? 'active' : ''; ?>" data-tooltip="Manage Memos">
-                        <i class="fas fa-tasks text-xl w-6"></i>
-                        <span class="sidebar-text ml-3">Manage Memos</span>
-                    </a>
+                    
+                    <!-- User Management Accordion -->
+                    <div class="accordion-item">
+                        <button class="sidebar-link accordion-toggle" onclick="toggleAccordion(this)">
+                            <i class="fas fa-users text-xl w-6"></i>
+                            <span class="sidebar-text ml-3">User Management</span>
+                            <i class="fas fa-chevron-down text-xs ml-auto accordion-icon"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <a href="upload_csv.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'upload_csv.php' ? 'active' : ''; ?>">
+                                <i class="fas fa-file-upload text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Upload CSV</span>
+                            </a>
+                            <a href="manage_users.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_users.php' ? 'active' : ''; ?>">
+                                <i class="fas fa-user-friends text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Manage Users</span>
+                            </a>
+                            <a href="manage_admin_roles.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_admin_roles.php' ? 'active' : ''; ?>">
+                                <i class="fas fa-user-tag text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Manage Roles</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Memo Management Accordion -->
+                    <div class="accordion-item">
+                        <button class="sidebar-link accordion-toggle" onclick="toggleAccordion(this)">
+                            <i class="fas fa-envelope text-xl w-6"></i>
+                            <span class="sidebar-text ml-3">Memo System</span>
+                            <i class="fas fa-chevron-down text-xs ml-auto accordion-icon"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <a href="upload_memo.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'upload_memo.php' ? 'active' : ''; ?>">
+                                <i class="fas fa-cloud-upload-alt text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Upload Memo</span>
+                            </a>
+                            <a href="manage_memos.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_memos.php' ? 'active' : ''; ?>">
+                                <i class="fas fa-tasks text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Manage Memos</span>
+                            </a>
+                        </div>
+                    </div>
                 <?php elseif ($userRole === 'admin'): ?>
                     <a href="admin_dashboard.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'admin_dashboard.php' ? 'active' : ''; ?>" data-tooltip="Dashboard">
                         <i class="fas fa-tachometer-alt text-xl w-6"></i>
@@ -147,14 +181,25 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                         <i class="fas fa-file-alt text-xl w-6"></i>
                         <span class="sidebar-text ml-3">My Records</span>
                     </a>
-                    <a href="view_received_memos.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'view_received_memos.php' ? 'active' : ''; ?>" data-tooltip="Received Memos">
-                        <i class="fas fa-envelope text-xl w-6"></i>
-                        <span class="sidebar-text ml-3">Received Memos</span>
-                    </a>
-                    <a href="memo_history.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'memo_history.php' ? 'active' : ''; ?>" data-tooltip="Memo History">
-                        <i class="fas fa-history text-xl w-6"></i>
-                        <span class="sidebar-text ml-3">Memo History</span>
-                    </a>
+                    
+                    <!-- Memo Management Accordion -->
+                    <div class="accordion-item">
+                        <button class="sidebar-link accordion-toggle" onclick="toggleAccordion(this)">
+                            <i class="fas fa-envelope text-xl w-6"></i>
+                            <span class="sidebar-text ml-3">Memos</span>
+                            <i class="fas fa-chevron-down text-xs ml-auto accordion-icon"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <a href="view_received_memos.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'view_received_memos.php' ? 'active' : ''; ?>">
+                                <i class="fas fa-inbox text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Received Memos</span>
+                            </a>
+                            <a href="memo_history.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'memo_history.php' ? 'active' : ''; ?>">
+                                <i class="fas fa-history text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Memo History</span>
+                            </a>
+                        </div>
+                    </div>
                 <?php endif; ?>
             </nav>
             

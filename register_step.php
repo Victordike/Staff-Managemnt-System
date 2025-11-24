@@ -555,7 +555,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <input type="file" id="profilePictureInput" name="profile_picture" class="input-field" accept="image/*">
                                 <div id="previewContainer" class="mt-4 hidden">
                                     <p class="text-gray-600 font-semibold mb-2">Preview:</p>
-                                    <img id="profilePreview" src="" alt="Profile Preview" class="w-48 h-48 object-cover rounded-lg border-2 border-gray-300 shadow-lg">
+                                    <img id="profilePreview" src="" alt="Profile Preview" style="width: 120px; height: 120px;" class="object-cover rounded-lg border-2 border-gray-300 shadow-lg">
                                 </div>
                             </div>
                         </div>

@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="assets/css/loading.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gradient-to-br from-indigo-600 to-purple-800 min-h-screen flex items-center justify-center px-4">
+<body class="bg-gradient-to-br from-indigo-600 to-purple-800 min-h-screen flex items-center justify-center px-4" style="margin: 0; padding: 0; overflow: hidden;">
     <!-- Advanced Loading Screen -->
     <div id="loadingScreen" class="loading-overlay">
         <div class="loading-content">
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <div class="card max-w-md w-full">
+    <div class="card max-w-md w-full" style="opacity: 0; transition: opacity 0.3s ease-in;">
         <div class="text-center mb-8">
             <div class="mb-4">
                 <img src="img/dfdf.jpeg" alt="School Logo" class="w-24 h-24 mx-auto rounded-lg shadow-md">
@@ -130,12 +130,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Hide loading screen when page is fully loaded
+    // Hide loading screen and show content when page is fully loaded
     window.addEventListener('load', function() {
         const loadingScreen = document.getElementById('loadingScreen');
+        const loginCard = document.querySelector('.card.max-w-md');
         if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            loadingScreen.style.transition = 'opacity 0.5s ease-out';
+            if (loginCard) loginCard.style.opacity = '1';
             setTimeout(function() {
-                loadingScreen.classList.add('hidden');
+                loadingScreen.style.display = 'none';
             }, 500);
         }
     });

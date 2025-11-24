@@ -109,7 +109,7 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
         }
     </script>
 </head>
-<body class="bg-gray-100 dark:bg-gray-950 transition-colors duration-300">
+<body class="bg-gray-100 dark:bg-gray-950 transition-colors duration-300 overflow-hidden" style="margin: 0; padding: 0;">
     <!-- Advanced Loading Screen -->
     <div id="loadingScreen" class="loading-overlay">
         <div class="loading-content">
@@ -127,18 +127,22 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
     </div>
     
     <script>
-        // Hide loading screen when page loads
+        // Hide loading screen and show content when page loads
         window.addEventListener('load', function() {
             const loadingScreen = document.getElementById('loadingScreen');
+            const mainContent = document.querySelector('.flex.h-screen.overflow-hidden.relative');
             if (loadingScreen) {
+                loadingScreen.style.opacity = '0';
+                loadingScreen.style.transition = 'opacity 0.5s ease-out';
                 setTimeout(function() {
-                    loadingScreen.classList.add('hidden');
+                    loadingScreen.style.display = 'none';
+                    if (mainContent) mainContent.style.opacity = '1';
                 }, 500);
             }
         });
     </script>
     
-    <div class="flex h-screen overflow-hidden relative">
+    <div class="flex h-screen overflow-hidden relative" style="opacity: 0; transition: opacity 0.3s ease-in;">
         <!-- Confirmation Dialog Modal -->
         <div id="confirmDialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">

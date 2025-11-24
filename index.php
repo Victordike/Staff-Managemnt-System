@@ -23,7 +23,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="overflow-hidden">
+<body class="overflow-hidden" style="margin: 0; padding: 0;">
     <!-- Advanced Loading Screen -->
     <div id="loadingScreen" class="loading-overlay">
         <div class="loading-content">
@@ -41,7 +41,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     </div>
 
     <!-- Background Slideshow -->
-    <div class="slideshow-container">
+    <div class="slideshow-container" style="opacity: 0; transition: opacity 0.3s ease-in;">
         <img src="assets/images/slideshow/slide1.jpg" class="slideshow-image active" alt="Slide 1">
         <img src="assets/images/slideshow/slide2.jpg" class="slideshow-image" alt="Slide 2">
         <img src="assets/images/slideshow/slide3.jpg" class="slideshow-image" alt="Slide 3">
@@ -124,11 +124,19 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     <script>
         const loadingScreen = document.getElementById('loadingScreen');
 
-        // Hide loading screen when page is fully loaded
+        // Hide loading screen and show content when page is fully loaded
         window.addEventListener('load', function() {
             setTimeout(function() {
                 if (loadingScreen) {
-                    loadingScreen.classList.add('hidden');
+                    loadingScreen.style.opacity = '0';
+                    loadingScreen.style.transition = 'opacity 0.5s ease-out';
+                    const slideshow = document.querySelector('.slideshow-container');
+                    const overlay = document.querySelector('.overlay');
+                    if (slideshow) slideshow.style.opacity = '1';
+                    if (overlay) overlay.style.opacity = '1';
+                    setTimeout(function() {
+                        loadingScreen.style.display = 'none';
+                    }, 500);
                 }
             }, 500);
         });

@@ -354,7 +354,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="assets/css/loading.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-100 min-h-screen py-8 px-4">
+<body class="bg-gray-100 min-h-screen py-8 px-4" style="margin: 0; padding: 0; overflow: hidden;">
     <!-- Advanced Loading Screen -->
     <div id="loadingScreen" class="loading-overlay">
         <div class="loading-content">
@@ -372,18 +372,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
-        // Hide loading screen when page loads
+        // Hide loading screen and show content when page loads
         window.addEventListener('load', function() {
             const loadingScreen = document.getElementById('loadingScreen');
+            const mainContent = document.querySelector('.max-w-2xl.mx-auto');
             if (loadingScreen) {
+                loadingScreen.style.opacity = '0';
+                loadingScreen.style.transition = 'opacity 0.5s ease-out';
+                if (mainContent) mainContent.style.opacity = '1';
                 setTimeout(function() {
-                    loadingScreen.classList.add('hidden');
+                    loadingScreen.style.display = 'none';
                 }, 500);
             }
         });
     </script>
     
-    <div class="max-w-2xl mx-auto">
+    <div class="max-w-2xl mx-auto" style="opacity: 0; transition: opacity 0.3s ease-in;">
         <div class="card">
             <!-- Header -->
             <div class="text-center mb-8">

@@ -86,7 +86,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
 
     <!-- Footer Information -->
     <div class="fixed bottom-0 left-0 right-0 bg-black bg-opacity-60 backdrop-blur-sm p-4 z-50">
-        <div class="container mx-auto max-w-4xl">
+        <div class="w-full">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-white text-center">
                 <!-- Feature 1 -->
                 <div class="animate-pulse">

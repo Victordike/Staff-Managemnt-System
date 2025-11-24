@@ -142,7 +142,7 @@ try {
                                     
                                     <form id="deleteMemoForm<?php echo $memo['id']; ?>" method="POST" class="hidden">
                                         <input type="hidden" name="memo_id" value="<?php echo $memo['id']; ?>">
-                                        <button type="submit" name="delete_memo"></button>
+                                        <button type="submit" name="delete_memo" value="1"></button>
                                     </form>
                                 </td>
                             </tr>

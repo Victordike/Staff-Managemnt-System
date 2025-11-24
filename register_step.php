@@ -351,9 +351,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $steps[$currentStep]; ?> - Registration</title>
     <link rel="stylesheet" href="assets/css/output.css">
+    <link rel="stylesheet" href="assets/css/loading.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-100 min-h-screen py-8 px-4">
+    <!-- Advanced Loading Screen -->
+    <div id="loadingScreen" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-glow-card">
+                <div class="spinner-premium">
+                    <span></span>
+                </div>
+                <h2 class="loading-text">Staff Management System</h2>
+                <p class="loading-subtext">Saving Progress<span class="loading-dots"></span></p>
+                <div class="loading-progress">
+                    <div class="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Hide loading screen when page loads
+        window.addEventListener('load', function() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                setTimeout(function() {
+                    loadingScreen.classList.add('hidden');
+                }, 500);
+            }
+        });
+    </script>
+    
     <div class="max-w-2xl mx-auto">
         <div class="card">
             <!-- Header -->

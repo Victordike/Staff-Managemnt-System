@@ -32,21 +32,6 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $pageTitle ?? 'Dashboard'; ?> - Staff Management System</title>
-    <!-- Advanced Loading Screen -->
-    <div id="loadingScreen" class="loading-overlay">
-        <div class="loading-content">
-            <div class="loading-glow-card">
-                <div class="spinner-premium">
-                    <span></span>
-                </div>
-                <h2 class="loading-text">Staff Management System</h2>
-                <p class="loading-subtext">Loading<span class="loading-dots"></span></p>
-                <div class="loading-progress">
-                    <div class="progress-bar"></div>
-                </div>
-            </div>
-        </div>
-    </div>
     <link rel="stylesheet" href="assets/css/output.css">
     <link rel="stylesheet" href="assets/css/loading.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -125,6 +110,34 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
     </script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-950 transition-colors duration-300">
+    <!-- Advanced Loading Screen -->
+    <div id="loadingScreen" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-glow-card">
+                <div class="spinner-premium">
+                    <span></span>
+                </div>
+                <h2 class="loading-text">Staff Management System</h2>
+                <p class="loading-subtext">Loading<span class="loading-dots"></span></p>
+                <div class="loading-progress">
+                    <div class="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Hide loading screen when page loads
+        window.addEventListener('load', function() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                setTimeout(function() {
+                    loadingScreen.classList.add('hidden');
+                }, 500);
+            }
+        });
+    </script>
+    
     <div class="flex h-screen overflow-hidden relative">
         <!-- Confirmation Dialog Modal -->
         <div id="confirmDialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

@@ -120,6 +120,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <script src="assets/js/slideshow.js"></script>
     <script src="assets/js/main.js"></script>
+    <script src="assets/js/loading-handler.js"></script>
     
     <script>
         const loadingScreen = document.getElementById('loadingScreen');

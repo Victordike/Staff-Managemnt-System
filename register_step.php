@@ -437,7 +437,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <!-- Navigation Buttons -->
                 <div class="flex gap-4 pt-6 border-t">
                     <?php if ($currentStep > 1): ?>
-                        <button type="submit" name="prev_step" class="btn-secondary flex-1">
+                        <button type="submit" name="prev_step" class="btn-secondary flex-1" formnovalidate>
                             <i class="fas fa-arrow-left mr-2"></i>Previous
                         </button>
                     <?php endif; ?>

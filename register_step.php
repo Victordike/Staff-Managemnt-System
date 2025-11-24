@@ -79,17 +79,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Validate and save current step
             switch ($currentStep) {
                 case 1:
-                    if (empty($_POST['dob']) || empty($_POST['sex']) || empty($_POST['marital_status']) || empty($_POST['address']) || empty($_POST['lga'])) {
-                        $error = 'Please fill in all personal data fields';
-                        break;
-                    }
-                    
+                    // No validation - allow partial saves for steps 1-4
                     $personal = [
-                        'dob' => sanitize($_POST['dob']),
-                        'sex' => sanitize($_POST['sex']),
-                        'marital_status' => sanitize($_POST['marital_status']),
-                        'address' => sanitize($_POST['address']),
-                        'lga' => sanitize($_POST['lga']),
+                        'dob' => sanitize($_POST['dob'] ?? ''),
+                        'sex' => sanitize($_POST['sex'] ?? ''),
+                        'marital_status' => sanitize($_POST['marital_status'] ?? ''),
+                        'address' => sanitize($_POST['address'] ?? ''),
+                        'lga' => sanitize($_POST['lga'] ?? ''),
                     ];
                     $_SESSION['personal_data'] = $personal;
                     
@@ -98,12 +94,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($existingDraft) {
                         $db->query(
                             "UPDATE registration_draft SET date_of_birth = ?, sex = ?, marital_status = ?, permanent_home_address = ?, lga_origin = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE staff_id = ?",
-                            [$personal['dob'], $personal['sex'], $personal['marital_status'], $personal['address'], $personal['lga'], $exitReg ? $currentStep : ($moveNext ? 2 : $currentStep), $preUser['staff_id']]
+                            [$personal['dob'] ?: null, $personal['sex'] ?: null, $personal['marital_status'] ?: null, $personal['address'] ?: null, $personal['lga'] ?: null, $exitReg ? $currentStep : ($moveNext ? 2 : $currentStep), $preUser['staff_id']]
                         );
                     } else {
                         $db->query(
                             "INSERT INTO registration_draft (staff_id, surname, firstname, date_of_birth, sex, marital_status, permanent_home_address, lga_origin, current_step) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                            [$preUser['staff_id'], $preUser['surname'], $preUser['firstname'], $personal['dob'], $personal['sex'], $personal['marital_status'], $personal['address'], $personal['lga'], $exitReg ? 1 : ($moveNext ? 2 : 1)]
+                            [$preUser['staff_id'], $preUser['surname'], $preUser['firstname'], $personal['dob'] ?: null, $personal['sex'] ?: null, $personal['marital_status'] ?: null, $personal['address'] ?: null, $personal['lga'] ?: null, $exitReg ? 1 : ($moveNext ? 2 : 1)]
                         );
                     }
                     
@@ -119,19 +115,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     break;
                     
                 case 2:
-                    if (empty($_POST['department']) || empty($_POST['position']) || empty($_POST['employment_type']) || empty($_POST['assumption_date']) || empty($_POST['cadre']) || empty($_POST['phone']) || empty($_POST['email'])) {
-                        $error = 'Please fill in all employment information fields';
-                        break;
-                    }
-                    
                     $employment = [
-                        'department' => sanitize($_POST['department']),
-                        'position' => sanitize($_POST['position']),
-                        'employment_type' => sanitize($_POST['employment_type']),
-                        'assumption_date' => sanitize($_POST['assumption_date']),
-                        'cadre' => sanitize($_POST['cadre']),
-                        'phone' => sanitize($_POST['phone']),
-                        'email' => sanitize($_POST['email']),
+                        'department' => sanitize($_POST['department'] ?? ''),
+                        'position' => sanitize($_POST['position'] ?? ''),
+                        'employment_type' => sanitize($_POST['employment_type'] ?? ''),
+                        'assumption_date' => sanitize($_POST['assumption_date'] ?? ''),
+                        'cadre' => sanitize($_POST['cadre'] ?? ''),
+                        'phone' => sanitize($_POST['phone'] ?? ''),
+                        'email' => sanitize($_POST['email'] ?? ''),
                     ];
                     $_SESSION['employment_data'] = $employment;
                     
@@ -139,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($existingDraft) {
                         $db->query(
                             "UPDATE registration_draft SET department = ?, position = ?, type_of_employment = ?, date_of_assumption = ?, cadre = ?, phone_number = ?, official_email = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE staff_id = ?",
-                            [$employment['department'], $employment['position'], $employment['employment_type'], $employment['assumption_date'], $employment['cadre'], $employment['phone'], $employment['email'], $exitReg ? $currentStep : ($moveNext ? 3 : $currentStep), $preUser['staff_id']]
+                            [$employment['department'] ?: null, $employment['position'] ?: null, $employment['employment_type'] ?: null, $employment['assumption_date'] ?: null, $employment['cadre'] ?: null, $employment['phone'] ?: null, $employment['email'] ?: null, $exitReg ? $currentStep : ($moveNext ? 3 : $currentStep), $preUser['staff_id']]
                         );
                     }
                     
@@ -155,17 +146,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     break;
                     
                 case 3:
-                    if (empty($_POST['bank_name']) || empty($_POST['account_name']) || empty($_POST['account_number']) || empty($_POST['pfa_name']) || empty($_POST['pfa_pin'])) {
-                        $error = 'Please fill in all banking details fields';
-                        break;
-                    }
-                    
                     $banking = [
-                        'bank_name' => sanitize($_POST['bank_name']),
-                        'account_name' => sanitize($_POST['account_name']),
-                        'account_number' => sanitize($_POST['account_number']),
-                        'pfa_name' => sanitize($_POST['pfa_name']),
-                        'pfa_pin' => sanitize($_POST['pfa_pin']),
+                        'bank_name' => sanitize($_POST['bank_name'] ?? ''),
+                        'account_name' => sanitize($_POST['account_name'] ?? ''),
+                        'account_number' => sanitize($_POST['account_number'] ?? ''),
+                        'pfa_name' => sanitize($_POST['pfa_name'] ?? ''),
+                        'pfa_pin' => sanitize($_POST['pfa_pin'] ?? ''),
                     ];
                     $_SESSION['banking_data'] = $banking;
                     
@@ -173,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($existingDraft) {
                         $db->query(
                             "UPDATE registration_draft SET bank_name = ?, account_name = ?, account_number = ?, pfa_name = ?, pfa_pin = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE staff_id = ?",
-                            [$banking['bank_name'], $banking['account_name'], $banking['account_number'], $banking['pfa_name'], $banking['pfa_pin'], $exitReg ? $currentStep : ($moveNext ? 4 : $currentStep), $preUser['staff_id']]
+                            [$banking['bank_name'] ?: null, $banking['account_name'] ?: null, $banking['account_number'] ?: null, $banking['pfa_name'] ?: null, $banking['pfa_pin'] ?: null, $exitReg ? $currentStep : ($moveNext ? 4 : $currentStep), $preUser['staff_id']]
                         );
                     }
                     
@@ -189,16 +175,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     break;
                     
                 case 4:
-                    if (empty($_POST['nok_name']) || empty($_POST['nok_phone']) || empty($_POST['nok_relationship']) || empty($_POST['nok_address'])) {
-                        $error = 'Please fill in all NOK details fields';
-                        break;
-                    }
-                    
                     $nok = [
-                        'nok_name' => sanitize($_POST['nok_name']),
-                        'nok_phone' => sanitize($_POST['nok_phone']),
-                        'nok_relationship' => sanitize($_POST['nok_relationship']),
-                        'nok_address' => sanitize($_POST['nok_address']),
+                        'nok_name' => sanitize($_POST['nok_name'] ?? ''),
+                        'nok_phone' => sanitize($_POST['nok_phone'] ?? ''),
+                        'nok_relationship' => sanitize($_POST['nok_relationship'] ?? ''),
+                        'nok_address' => sanitize($_POST['nok_address'] ?? ''),
                     ];
                     $_SESSION['nok_data'] = $nok;
                     
@@ -206,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($existingDraft) {
                         $db->query(
                             "UPDATE registration_draft SET nok_fullname = ?, nok_phone_number = ?, nok_relationship = ?, nok_address = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE staff_id = ?",
-                            [$nok['nok_name'], $nok['nok_phone'], $nok['nok_relationship'], $nok['nok_address'], $exitReg ? $currentStep : ($moveNext ? 5 : $currentStep), $preUser['staff_id']]
+                            [$nok['nok_name'] ?: null, $nok['nok_phone'] ?: null, $nok['nok_relationship'] ?: null, $nok['nok_address'] ?: null, $exitReg ? $currentStep : ($moveNext ? 5 : $currentStep), $preUser['staff_id']]
                         );
                     }
                     
@@ -222,6 +203,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     break;
                     
                 case 5:
+                    if ($exitReg) {
+                        // Just save and exit (allow incomplete password on exit)
+                        $existingDraft = $db->fetchOne("SELECT id FROM registration_draft WHERE staff_id = ?", [$preUser['staff_id']]);
+                        if ($existingDraft) {
+                            $db->query(
+                                "UPDATE registration_draft SET current_step = 5, updated_at = CURRENT_TIMESTAMP WHERE staff_id = ?",
+                                [$preUser['staff_id']]
+                            );
+                        }
+                        $_SESSION['registration_step'] = 5;
+                        $success = 'Your registration has been saved. You can continue later.';
+                        header('Refresh: 2; url=admin_login.php');
+                        break;
+                    }
+                    
+                    // For completion (not exit), validate ALL fields across all steps
                     if (empty($_POST['password']) || empty($_POST['confirm_password'])) {
                         $error = 'Please enter a password';
                         break;
@@ -235,18 +232,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         break;
                     }
                     
-                    if ($exitReg) {
-                        // Save password to draft and exit
-                        $existingDraft = $db->fetchOne("SELECT id FROM registration_draft WHERE staff_id = ?", [$preUser['staff_id']]);
-                        if ($existingDraft) {
-                            $db->query(
-                                "UPDATE registration_draft SET current_step = 5, updated_at = CURRENT_TIMESTAMP WHERE staff_id = ?",
-                                [$preUser['staff_id']]
-                            );
-                        }
-                        $_SESSION['registration_step'] = 5;
-                        $success = 'Your registration has been saved. You can continue later.';
-                        header('Refresh: 2; url=admin_login.php');
+                    // Validate all previous steps are complete
+                    $allPersonalFilled = !empty($personal['dob']) && !empty($personal['sex']) && !empty($personal['marital_status']) && !empty($personal['address']) && !empty($personal['lga']);
+                    $allEmploymentFilled = !empty($employment['department']) && !empty($employment['position']) && !empty($employment['employment_type']) && !empty($employment['assumption_date']) && !empty($employment['cadre']) && !empty($employment['phone']) && !empty($employment['email']);
+                    $allBankingFilled = !empty($banking['bank_name']) && !empty($banking['account_name']) && !empty($banking['account_number']) && !empty($banking['pfa_name']) && !empty($banking['pfa_pin']);
+                    $allNokFilled = !empty($nok['nok_name']) && !empty($nok['nok_phone']) && !empty($nok['nok_relationship']) && !empty($nok['nok_address']);
+                    
+                    if (!$allPersonalFilled) {
+                        $error = 'Please complete all fields in Step 1: Personal Data';
+                        break;
+                    }
+                    if (!$allEmploymentFilled) {
+                        $error = 'Please complete all fields in Step 2: Employment Information';
+                        break;
+                    }
+                    if (!$allBankingFilled) {
+                        $error = 'Please complete all fields in Step 3: Banking Details';
+                        break;
+                    }
+                    if (!$allNokFilled) {
+                        $error = 'Please complete all fields in Step 4: Next of Kin';
                         break;
                     }
                     
@@ -398,20 +403,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <h2 class="text-2xl font-bold text-gray-800 mb-4"><i class="fas fa-user text-blue-600 mr-2"></i>Personal Information</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">Date of Birth *</label>
-                                <input type="date" name="dob" class="input-field" value="<?php echo htmlspecialchars($personal['dob'] ?? ''); ?>" required>
+                                <label class="block text-gray-700 font-semibold mb-2">Date of Birth</label>
+                                <input type="date" name="dob" class="input-field" value="<?php echo htmlspecialchars($personal['dob'] ?? ''); ?>">
                             </div>
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">Sex *</label>
-                                <select name="sex" class="input-field" required>
+                                <label class="block text-gray-700 font-semibold mb-2">Sex</label>
+                                <select name="sex" class="input-field">
                                     <option value="">Select Sex</option>
                                     <option value="Male" <?php echo ($personal['sex'] ?? '') === 'Male' ? 'selected' : ''; ?>>Male</option>
                                     <option value="Female" <?php echo ($personal['sex'] ?? '') === 'Female' ? 'selected' : ''; ?>>Female</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">Marital Status *</label>
-                                <select name="marital_status" class="input-field" required>
+                                <label class="block text-gray-700 font-semibold mb-2">Marital Status</label>
+                                <select name="marital_status" class="input-field">
                                     <option value="">Select Status</option>
                                     <option value="Single" <?php echo ($personal['marital_status'] ?? '') === 'Single' ? 'selected' : ''; ?>>Single</option>
                                     <option value="Married" <?php echo ($personal['marital_status'] ?? '') === 'Married' ? 'selected' : ''; ?>>Married</option>
@@ -420,12 +425,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">LGA of Origin *</label>
-                                <input type="text" name="lga" class="input-field" value="<?php echo htmlspecialchars($personal['lga'] ?? ''); ?>" required>
+                                <label class="block text-gray-700 font-semibold mb-2">LGA of Origin</label>
+                                <input type="text" name="lga" class="input-field" value="<?php echo htmlspecialchars($personal['lga'] ?? ''); ?>">
                             </div>
                             <div class="md:col-span-2">
-                                <label class="block text-gray-700 font-semibold mb-2">Home Address *</label>
-                                <textarea name="address" class="input-field" rows="3" required><?php echo htmlspecialchars($personal['address'] ?? ''); ?></textarea>
+                                <label class="block text-gray-700 font-semibold mb-2">Home Address</label>
+                                <textarea name="address" class="input-field" rows="3"><?php echo htmlspecialchars($personal['address'] ?? ''); ?></textarea>
                             </div>
                         </div>
                     </div>
@@ -437,16 +442,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <h2 class="text-2xl font-bold text-gray-800 mb-4"><i class="fas fa-briefcase text-blue-600 mr-2"></i>Employment Information</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">Department *</label>
-                                <input type="text" name="department" class="input-field" value="<?php echo htmlspecialchars($employment['department'] ?? ''); ?>" required>
+                                <label class="block text-gray-700 font-semibold mb-2">Department</label>
+                                <input type="text" name="department" class="input-field" value="<?php echo htmlspecialchars($employment['department'] ?? ''); ?>">
                             </div>
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">Position *</label>
-                                <input type="text" name="position" class="input-field" value="<?php echo htmlspecialchars($employment['position'] ?? ''); ?>" required>
+                                <label class="block text-gray-700 font-semibold mb-2">Position</label>
+                                <input type="text" name="position" class="input-field" value="<?php echo htmlspecialchars($employment['position'] ?? ''); ?>">
                             </div>
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">Employment Type *</label>
-                                <select name="employment_type" class="input-field" required>
+                                <label class="block text-gray-700 font-semibold mb-2">Employment Type</label>
+                                <select name="employment_type" class="input-field">
                                     <option value="">Select Type</option>
                                     <option value="Permanent" <?php echo ($employment['employment_type'] ?? '') === 'Permanent' ? 'selected' : ''; ?>>Permanent</option>
                                     <option value="Contract" <?php echo ($employment['employment_type'] ?? '') === 'Contract' ? 'selected' : ''; ?>>Contract</option>
@@ -454,20 +459,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">Date of Assumption *</label>
-                                <input type="date" name="assumption_date" class="input-field" value="<?php echo htmlspecialchars($employment['assumption_date'] ?? ''); ?>" required>
+                                <label class="block text-gray-700 font-semibold mb-2">Date of Assumption</label>
+                                <input type="date" name="assumption_date" class="input-field" value="<?php echo htmlspecialchars($employment['assumption_date'] ?? ''); ?>">
                             </div>
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">Cadre *</label>
-                                <input type="text" name="cadre" class="input-field" value="<?php echo htmlspecialchars($employment['cadre'] ?? ''); ?>" required>
+                                <label class="block text-gray-700 font-semibold mb-2">Cadre</label>
+                                <input type="text" name="cadre" class="input-field" value="<?php echo htmlspecialchars($employment['cadre'] ?? ''); ?>">
                             </div>
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">Phone Number *</label>
-                                <input type="tel" name="phone" class="input-field" value="<?php echo htmlspecialchars($employment['phone'] ?? ''); ?>" required>
+                                <label class="block text-gray-700 font-semibold mb-2">Phone Number</label>
+                                <input type="tel" name="phone" class="input-field" value="<?php echo htmlspecialchars($employment['phone'] ?? ''); ?>">
                             </div>
                             <div class="md:col-span-2">
-                                <label class="block text-gray-700 font-semibold mb-2">Official Email *</label>
-                                <input type="email" name="email" class="input-field" value="<?php echo htmlspecialchars($employment['email'] ?? ''); ?>" required>
+                                <label class="block text-gray-700 font-semibold mb-2">Official Email</label>
+                                <input type="email" name="email" class="input-field" value="<?php echo htmlspecialchars($employment['email'] ?? ''); ?>">
                             </div>
                         </div>
                     </div>
@@ -479,24 +484,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <h2 class="text-2xl font-bold text-gray-800 mb-4"><i class="fas fa-bank text-blue-600 mr-2"></i>Banking Details</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">Bank Name *</label>
-                                <input type="text" name="bank_name" class="input-field" value="<?php echo htmlspecialchars($banking['bank_name'] ?? ''); ?>" required>
+                                <label class="block text-gray-700 font-semibold mb-2">Bank Name</label>
+                                <input type="text" name="bank_name" class="input-field" value="<?php echo htmlspecialchars($banking['bank_name'] ?? ''); ?>">
                             </div>
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">Account Name *</label>
-                                <input type="text" name="account_name" class="input-field" value="<?php echo htmlspecialchars($banking['account_name'] ?? ''); ?>" required>
+                                <label class="block text-gray-700 font-semibold mb-2">Account Name</label>
+                                <input type="text" name="account_name" class="input-field" value="<?php echo htmlspecialchars($banking['account_name'] ?? ''); ?>">
                             </div>
                             <div class="md:col-span-2">
-                                <label class="block text-gray-700 font-semibold mb-2">Account Number *</label>
-                                <input type="text" name="account_number" class="input-field" value="<?php echo htmlspecialchars($banking['account_number'] ?? ''); ?>" required>
+                                <label class="block text-gray-700 font-semibold mb-2">Account Number</label>
+                                <input type="text" name="account_number" class="input-field" value="<?php echo htmlspecialchars($banking['account_number'] ?? ''); ?>">
                             </div>
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">PFA Name *</label>
-                                <input type="text" name="pfa_name" class="input-field" value="<?php echo htmlspecialchars($banking['pfa_name'] ?? ''); ?>" required>
+                                <label class="block text-gray-700 font-semibold mb-2">PFA Name</label>
+                                <input type="text" name="pfa_name" class="input-field" value="<?php echo htmlspecialchars($banking['pfa_name'] ?? ''); ?>">
                             </div>
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">PFA Pin *</label>
-                                <input type="text" name="pfa_pin" class="input-field" value="<?php echo htmlspecialchars($banking['pfa_pin'] ?? ''); ?>" required>
+                                <label class="block text-gray-700 font-semibold mb-2">PFA Pin</label>
+                                <input type="text" name="pfa_pin" class="input-field" value="<?php echo htmlspecialchars($banking['pfa_pin'] ?? ''); ?>">
                             </div>
                         </div>
                     </div>
@@ -508,16 +513,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <h2 class="text-2xl font-bold text-gray-800 mb-4"><i class="fas fa-users text-blue-600 mr-2"></i>Next of Kin (NOK)</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">NOK Full Name *</label>
-                                <input type="text" name="nok_name" class="input-field" value="<?php echo htmlspecialchars($nok['nok_name'] ?? ''); ?>" required>
+                                <label class="block text-gray-700 font-semibold mb-2">NOK Full Name</label>
+                                <input type="text" name="nok_name" class="input-field" value="<?php echo htmlspecialchars($nok['nok_name'] ?? ''); ?>">
                             </div>
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">NOK Phone Number *</label>
-                                <input type="tel" name="nok_phone" class="input-field" value="<?php echo htmlspecialchars($nok['nok_phone'] ?? ''); ?>" required>
+                                <label class="block text-gray-700 font-semibold mb-2">NOK Phone Number</label>
+                                <input type="tel" name="nok_phone" class="input-field" value="<?php echo htmlspecialchars($nok['nok_phone'] ?? ''); ?>">
                             </div>
                             <div>
-                                <label class="block text-gray-700 font-semibold mb-2">Relationship *</label>
-                                <select name="nok_relationship" class="input-field" required>
+                                <label class="block text-gray-700 font-semibold mb-2">Relationship</label>
+                                <select name="nok_relationship" class="input-field">
                                     <option value="">Select Relationship</option>
                                     <option value="Spouse" <?php echo ($nok['nok_relationship'] ?? '') === 'Spouse' ? 'selected' : ''; ?>>Spouse</option>
                                     <option value="Parent" <?php echo ($nok['nok_relationship'] ?? '') === 'Parent' ? 'selected' : ''; ?>>Parent</option>
@@ -527,8 +532,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </select>
                             </div>
                             <div class="md:col-span-2">
-                                <label class="block text-gray-700 font-semibold mb-2">NOK Address *</label>
-                                <textarea name="nok_address" class="input-field" rows="3" required><?php echo htmlspecialchars($nok['nok_address'] ?? ''); ?></textarea>
+                                <label class="block text-gray-700 font-semibold mb-2">NOK Address</label>
+                                <textarea name="nok_address" class="input-field" rows="3"><?php echo htmlspecialchars($nok['nok_address'] ?? ''); ?></textarea>
                             </div>
                         </div>
                     </div>

@@ -83,6 +83,60 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
             </div>
         </div>
     </div>
+
+    <!-- Footer Information -->
+    <div class="fixed bottom-0 left-0 right-0 bg-black bg-opacity-60 backdrop-blur-sm p-4 z-50">
+        <div class="container mx-auto max-w-4xl">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-white text-center">
+                <!-- Feature 1 -->
+                <div class="animate-pulse">
+                    <div class="flex justify-center mb-2">
+                        <i class="fas fa-users text-2xl text-indigo-400"></i>
+                    </div>
+                    <h3 class="font-semibold text-sm mb-1">Staff Management</h3>
+                    <p class="text-xs text-gray-300">Comprehensive employee registration and management</p>
+                </div>
+                <!-- Feature 2 -->
+                <div class="animate-pulse" style="animation-delay: 0.2s;">
+                    <div class="flex justify-center mb-2">
+                        <i class="fas fa-envelope text-2xl text-purple-400"></i>
+                    </div>
+                    <h3 class="font-semibold text-sm mb-1">Memo System</h3>
+                    <p class="text-xs text-gray-300">Send and track official memos to staff members</p>
+                </div>
+                <!-- Feature 3 -->
+                <div class="animate-pulse" style="animation-delay: 0.4s;">
+                    <div class="flex justify-center mb-2">
+                        <i class="fas fa-lock text-2xl text-pink-400"></i>
+                    </div>
+                    <h3 class="font-semibold text-sm mb-1">Secure Access</h3>
+                    <p class="text-xs text-gray-300">Role-based authentication and data protection</p>
+                </div>
+            </div>
+            <!-- Scrolling Text -->
+            <div class="mt-4 overflow-hidden">
+                <div class="animate-scroll-text">
+                    <p class="text-white text-xs text-center opacity-75 whitespace-nowrap inline-block px-4">
+                        Welcome to the Staff Management System of Federal Polytechnic of Oil and Gas • Efficient employee management and communication • Secure and reliable platform
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes scroll-text {
+            0% {
+                transform: translateX(100%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+        .animate-scroll-text {
+            animation: scroll-text 20s linear infinite;
+        }
+    </style>
     
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>

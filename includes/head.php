@@ -193,7 +193,9 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                     <!-- Expanded View (hidden when collapsed) -->
                     <div class="sidebar-text text-center">
                         <h3 class="font-semibold text-gray-800 dark:text-white"><?php echo htmlspecialchars($fullname); ?></h3>
-                        <p class="text-sm text-gray-600 dark:text-gray-300 capitalize"><?php echo htmlspecialchars($userRole); ?></p>
+                        <div class="text-blue-600 dark:text-blue-400 text-xl mt-2">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
                     </div>
                     <?php if ($userRole === 'superadmin'): ?>
                         <a href="superadmin_profile.php" class="sidebar-text mt-3 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition">

@@ -31,6 +31,100 @@ function extractWordDocumentText($file_path) {
     return null;
 }
 
+// Extract text from PDF
+function extractPDFText($file_path) {
+    if (!file_exists($file_path)) {
+        return null;
+    }
+    
+    try {
+        // Try using pdftotext command (Unix/Linux)
+        if (function_exists('exec')) {
+            $output = null;
+            $return_var = null;
+            @exec('which pdftotext 2>/dev/null', $output, $return_var);
+            
+            if ($return_var === 0) {
+                $temp_file = tempnam(sys_get_temp_dir(), 'pdf_text_');
+                @exec('pdftotext "' . escapeshellarg($file_path) . '" "' . escapeshellarg($temp_file) . '" 2>/dev/null', $output, $return_var);
+                
+                if ($return_var === 0 && file_exists($temp_file)) {
+                    $text = file_get_contents($temp_file);
+                    @unlink($temp_file);
+                    return !empty($text) ? trim($text) : null;
+                }
+                @unlink($temp_file);
+            }
+        }
+        
+        // Fallback: Try reading raw PDF content for text
+        $content = file_get_contents($file_path);
+        if ($content) {
+            // Simple extraction: find text between BT (Begin Text) and ET (End Text)
+            $matches = [];
+            preg_match_all('/BT(.*?)ET/s', $content, $matches);
+            
+            if (!empty($matches[1])) {
+                $text = implode(' ', $matches[1]);
+                // Remove PDF encoding noise
+                $text = preg_replace('/[^\x20-\x7E\n\r\t]/u', ' ', $text);
+                $text = preg_replace('/\s+/', ' ', $text);
+                return !empty($text) ? trim($text) : null;
+            }
+        }
+    } catch (Exception $e) {
+        return null;
+    }
+    
+    return null;
+}
+
+// Validate memo content for required criteria
+function validateMemoContent($file_path, $file_type, $required_text) {
+    if (empty($required_text) || !file_exists($file_path)) {
+        return ['valid' => true, 'message' => ''];
+    }
+    
+    $extracted_text = null;
+    
+    // Extract text based on file type
+    if (in_array($file_type, ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])) {
+        $extracted_text = extractWordDocumentText($file_path);
+    } elseif ($file_type === 'application/pdf') {
+        $extracted_text = extractPDFText($file_path);
+    } elseif (in_array($file_type, ['image/jpeg', 'image/png', 'image/gif'])) {
+        // For images, we cannot easily extract text without OCR
+        return [
+            'valid' => false, 
+            'message' => 'Content validation not supported for images. Please use text-based documents or PDFs.'
+        ];
+    }
+    
+    // Check if required text is found
+    if ($extracted_text === null) {
+        return [
+            'valid' => false,
+            'message' => 'Could not extract text from file. Please check the file format.'
+        ];
+    }
+    
+    // Case-insensitive search for required text
+    $required_text_lower = strtolower(trim($required_text));
+    $extracted_text_lower = strtolower($extracted_text);
+    
+    if (strpos($extracted_text_lower, $required_text_lower) !== false) {
+        return [
+            'valid' => true,
+            'message' => 'Required text found in document'
+        ];
+    } else {
+        return [
+            'valid' => false,
+            'message' => "Required text '{$required_text}' not found in document"
+        ];
+    }
+}
+
 function isLoggedIn() {
     return isset($_SESSION['user_id']) && isset($_SESSION['role']);
 }

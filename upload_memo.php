@@ -17,6 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = sanitize($_POST['description'] ?? '');
     $recipient_type = sanitize($_POST['recipient_type'] ?? 'all');
     $recipient_id = null;
+    $enable_validation = isset($_POST['enable_validation']) ? true : false;
+    $required_text = sanitize($_POST['required_text'] ?? '');
     
     if ($recipient_type === 'single') {
         $recipient_id = !empty($_POST['recipient_id']) ? intval($_POST['recipient_id']) : null;
@@ -46,6 +48,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $blur_detected = $blur_status ? 1 : 0;
                 if ($blur_detected) {
                     $error = 'The image text appears too blurry. Please provide a clearer image.';
+                }
+            }
+            
+            // Validate memo content if enabled
+            if (!$error && $enable_validation && !empty($required_text)) {
+                $validation_result = validateMemoContent($_FILES['memo_file']['tmp_name'], $file_type, $required_text);
+                if (!$validation_result['valid']) {
+                    $error = $validation_result['message'];
                 }
             }
             
@@ -165,6 +175,30 @@ try {
                 <textarea name="description" class="input-field w-full" rows="3" placeholder="Add a brief description of the memo..."></textarea>
             </div>
 
+            <!-- Content Validation Section -->
+            <div class="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
+                <div class="flex items-start">
+                    <input type="checkbox" id="enableValidation" name="enable_validation" class="mt-1 cursor-pointer" onchange="toggleValidationInput()">
+                    <div class="ml-3 flex-1">
+                        <label for="enableValidation" class="text-sm font-semibold text-purple-800 dark:text-purple-200 cursor-pointer">
+                            <i class="fas fa-shield-alt mr-2"></i>Enable Content Validation
+                        </label>
+                        <p class="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                            Ensure specific text/criteria exists in the document before sending. Works with PDFs and Word documents.
+                        </p>
+                    </div>
+                </div>
+                <div id="validationInput" class="hidden mt-4">
+                    <label class="block text-sm font-semibold text-purple-800 dark:text-purple-200 mb-2">
+                        <i class="fas fa-search mr-2"></i>Required Text to Find
+                    </label>
+                    <input type="text" name="required_text" class="input-field w-full" placeholder="e.g., INTERNAL MEMORANDUM" id="requiredTextInput">
+                    <p class="text-xs text-purple-700 dark:text-purple-300 mt-2">
+                        The memo will only be sent if this text is found in the document (case-insensitive).
+                    </p>
+                </div>
+            </div>
+
             <!-- File Upload -->
             <div>
                 <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Upload File *</label>
@@ -223,6 +257,20 @@ document.querySelectorAll('input[name="recipient_type"]').forEach(radio => {
         document.getElementById('singleRecipient').classList.toggle('hidden', this.value === 'all');
     });
 });
+
+function toggleValidationInput() {
+    const enableCheckbox = document.getElementById('enableValidation');
+    const validationInput = document.getElementById('validationInput');
+    const requiredTextInput = document.getElementById('requiredTextInput');
+    
+    if (enableCheckbox.checked) {
+        validationInput.classList.remove('hidden');
+        requiredTextInput.focus();
+    } else {
+        validationInput.classList.add('hidden');
+        requiredTextInput.value = '';
+    }
+}
 </script>
 
 <?php require_once 'includes/foot.php'; ?>

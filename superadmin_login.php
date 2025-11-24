@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="username" class="block text-gray-700 font-semibold mb-2">
                     <i class="fas fa-user mr-2"></i>Username or Email
                 </label>
-                <input type="text" id="username" name="username" class="input-field" placeholder="Enter your username or email" required>
+                <input type="text" id="username" name="username" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm hover:shadow-md transition-all duration-200" placeholder="Enter your username or email" required>
             </div>
             
             <div class="mb-6">
@@ -86,12 +86,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
             
-            <button type="submit" class="w-full btn-primary mb-4">
+            <button type="submit" class="w-full px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 transform hover:-translate-y-0.5 mb-4">
                 <i class="fas fa-sign-in-alt mr-2"></i>Login
             </button>
             
             <div class="text-center">
-                <a href="index.php" class="text-gray-600 hover:text-gray-800 transition duration-200">
+                <a href="index.php" class="text-indigo-600 hover:text-indigo-800 transition duration-200 font-medium">
                     <i class="fas fa-arrow-left mr-2"></i>Back to Home
                 </a>
             </div>

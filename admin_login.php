@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="staff_id" class="block text-gray-700 font-semibold mb-2">
                     <i class="fas fa-id-badge mr-2"></i>Staff ID
                 </label>
-                <input type="text" id="staff_id" name="staff_id" class="input-field" placeholder="Enter your Staff ID" required>
+                <input type="text" id="staff_id" name="staff_id" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm hover:shadow-md transition-all duration-200" placeholder="Enter your Staff ID" required>
             </div>
             
             <div class="mb-6">
@@ -87,12 +87,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
             
-            <button type="submit" class="w-full btn-primary mb-4">
+            <button type="submit" class="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 transform hover:-translate-y-0.5 mb-4">
                 <i class="fas fa-sign-in-alt mr-2"></i>Login
             </button>
             
             <div class="text-center">
-                <a href="index.php" class="text-blue-600 hover:text-blue-800 transition duration-200">
+                <a href="index.php" class="text-blue-600 hover:text-blue-800 transition duration-200 font-medium">
                     <i class="fas fa-arrow-left mr-2"></i>Back to Home
                 </a>
             </div>

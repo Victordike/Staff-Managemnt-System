@@ -37,8 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify'])) {
                 if ($preUser) {
                     // Store pre-user data in session
                     $_SESSION['pre_user'] = $preUser;
-                    $_SESSION['registration_step'] = 2;
-                    header('Location: register_form.php');
+                    $_SESSION['registration_step'] = 1;
+                    header('Location: register_step.php');
                     exit;
                 } else {
                     $error = 'Verification failed. Please ensure your Staff ID, First Name, and Last Name match the records uploaded by the administrator.';

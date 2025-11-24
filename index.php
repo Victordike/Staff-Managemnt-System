@@ -85,13 +85,11 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     </div>
 
     <!-- Footer Information -->
-    <div class="fixed bottom-0 left-0 right-0 bg-black bg-opacity-60 backdrop-blur-sm py-3 z-50">
-        <div class="w-screen overflow-hidden">
-            <div class="animate-scroll-text">
-                <p class="text-white text-sm opacity-90 whitespace-nowrap inline-block px-4">
-                    Welcome to the Staff Management System of Federal Polytechnic of Oil and Gas • Efficient employee management and communication • Secure and reliable platform • Advanced memo system with delivery tracking
-                </p>
-            </div>
+    <div style="position: fixed; bottom: 0; left: 0; right: 0; width: 100%; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); padding: 12px 0; z-index: 50; overflow: hidden;">
+        <div class="animate-scroll-text">
+            <p class="text-white text-sm opacity-90" style="white-space: nowrap; display: inline-block; padding: 0 16px; width: fit-content;">
+                Welcome to the Staff Management System of Federal Polytechnic of Oil and Gas • Efficient employee management and communication • Secure and reliable platform • Advanced memo system with delivery tracking
+            </p>
         </div>
     </div>
 

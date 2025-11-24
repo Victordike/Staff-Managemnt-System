@@ -184,7 +184,7 @@ try {
                             <i class="fas fa-shield-alt mr-2"></i>Enable Content Validation
                         </label>
                         <p class="text-xs text-purple-700 dark:text-purple-300 mt-1">
-                            Ensure specific text/criteria exists in the document before sending. Works with PDFs and Word documents.
+                            Ensure specific text/criteria exists in PDFs and Word documents. Images will be allowed through without validation.
                         </p>
                     </div>
                 </div>
@@ -194,7 +194,7 @@ try {
                     </label>
                     <input type="text" name="required_text" class="input-field w-full" placeholder="e.g., INTERNAL MEMORANDUM" id="requiredTextInput">
                     <p class="text-xs text-purple-700 dark:text-purple-300 mt-2">
-                        The memo will only be sent if this text is found in the document (case-insensitive).
+                        The memo will only be sent if this text is found in PDF or Word documents (case-insensitive). Images bypass validation.
                     </p>
                 </div>
             </div>

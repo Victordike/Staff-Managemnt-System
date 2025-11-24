@@ -87,24 +87,27 @@ function validateMemoContent($file_path, $file_type, $required_text) {
     
     $extracted_text = null;
     
+    // For images, skip validation (cannot extract text without OCR)
+    // Images will be allowed to pass through without validation
+    if (in_array($file_type, ['image/jpeg', 'image/png', 'image/gif'])) {
+        return [
+            'valid' => true, 
+            'message' => 'Image uploaded (content validation skipped - not applicable for images)'
+        ];
+    }
+    
     // Extract text based on file type
     if (in_array($file_type, ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])) {
         $extracted_text = extractWordDocumentText($file_path);
     } elseif ($file_type === 'application/pdf') {
         $extracted_text = extractPDFText($file_path);
-    } elseif (in_array($file_type, ['image/jpeg', 'image/png', 'image/gif'])) {
-        // For images, we cannot easily extract text without OCR
-        return [
-            'valid' => false, 
-            'message' => 'Content validation not supported for images. Please use text-based documents or PDFs.'
-        ];
     }
     
     // Check if required text is found
     if ($extracted_text === null) {
         return [
             'valid' => false,
-            'message' => 'Could not extract text from file. Please check the file format.'
+            'message' => 'Could not extract text from file. Please check the file format and that it contains text.'
         ];
     }
     

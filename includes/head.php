@@ -214,6 +214,10 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                                 <i class="fas fa-tasks text-lg w-6"></i>
                                 <span class="sidebar-text ml-3">Manage Memos</span>
                             </a>
+                            <a href="superadmin_memo_history.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'superadmin_memo_history.php' ? 'active' : ''; ?>" data-tooltip="Memo History">
+                                <i class="fas fa-history text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Memo History</span>
+                            </a>
                         </div>
                     </div>
                 <?php elseif ($userRole === 'admin'): ?>

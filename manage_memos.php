@@ -140,9 +140,9 @@ try {
                                         <i class="fas fa-trash"></i>
                                     </button>
                                     
-                                    <form id="deleteMemoForm<?php echo $memo['id']; ?>" method="POST" class="hidden">
+                                    <form id="deleteMemoForm<?php echo $memo['id']; ?>" method="POST" style="display: none;">
                                         <input type="hidden" name="memo_id" value="<?php echo $memo['id']; ?>">
-                                        <button type="submit" name="delete_memo" value="1"></button>
+                                        <input type="hidden" name="delete_memo" value="1">
                                     </form>
                                 </td>
                             </tr>

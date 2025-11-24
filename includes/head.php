@@ -183,15 +183,15 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                             <i class="fas fa-chevron-down text-xs ml-auto accordion-icon"></i>
                         </button>
                         <div class="accordion-content">
-                            <a href="upload_csv.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'upload_csv.php' ? 'active' : ''; ?>">
+                            <a href="upload_csv.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'upload_csv.php' ? 'active' : ''; ?>" data-tooltip="Upload CSV">
                                 <i class="fas fa-file-upload text-lg w-6"></i>
                                 <span class="sidebar-text ml-3">Upload CSV</span>
                             </a>
-                            <a href="manage_users.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_users.php' ? 'active' : ''; ?>">
+                            <a href="manage_users.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_users.php' ? 'active' : ''; ?>" data-tooltip="Manage Users">
                                 <i class="fas fa-user-friends text-lg w-6"></i>
                                 <span class="sidebar-text ml-3">Manage Users</span>
                             </a>
-                            <a href="manage_admin_roles.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_admin_roles.php' ? 'active' : ''; ?>">
+                            <a href="manage_admin_roles.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_admin_roles.php' ? 'active' : ''; ?>" data-tooltip="Manage Roles">
                                 <i class="fas fa-user-tag text-lg w-6"></i>
                                 <span class="sidebar-text ml-3">Manage Roles</span>
                             </a>
@@ -206,11 +206,11 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                             <i class="fas fa-chevron-down text-xs ml-auto accordion-icon"></i>
                         </button>
                         <div class="accordion-content">
-                            <a href="upload_memo.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'upload_memo.php' ? 'active' : ''; ?>">
+                            <a href="upload_memo.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'upload_memo.php' ? 'active' : ''; ?>" data-tooltip="Upload Memo">
                                 <i class="fas fa-cloud-upload-alt text-lg w-6"></i>
                                 <span class="sidebar-text ml-3">Upload Memo</span>
                             </a>
-                            <a href="manage_memos.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_memos.php' ? 'active' : ''; ?>">
+                            <a href="manage_memos.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_memos.php' ? 'active' : ''; ?>" data-tooltip="Manage Memos">
                                 <i class="fas fa-tasks text-lg w-6"></i>
                                 <span class="sidebar-text ml-3">Manage Memos</span>
                             </a>
@@ -234,11 +234,11 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                             <i class="fas fa-chevron-down text-xs ml-auto accordion-icon"></i>
                         </button>
                         <div class="accordion-content">
-                            <a href="view_received_memos.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'view_received_memos.php' ? 'active' : ''; ?>">
+                            <a href="view_received_memos.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'view_received_memos.php' ? 'active' : ''; ?>" data-tooltip="Received Memos">
                                 <i class="fas fa-inbox text-lg w-6"></i>
                                 <span class="sidebar-text ml-3">Received Memos</span>
                             </a>
-                            <a href="memo_history.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'memo_history.php' ? 'active' : ''; ?>">
+                            <a href="memo_history.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'memo_history.php' ? 'active' : ''; ?>" data-tooltip="Memo History">
                                 <i class="fas fa-history text-lg w-6"></i>
                                 <span class="sidebar-text ml-3">Memo History</span>
                             </a>

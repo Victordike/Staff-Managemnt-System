@@ -79,13 +79,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="password" class="block text-gray-700 font-semibold mb-2">
                     <i class="fas fa-lock mr-2"></i>Password
                 </label>
-                <div class="flex gap-0">
-                    <input type="password" id="password" name="password" class="input-field flex-1 rounded-none rounded-l-lg focus:outline-none" placeholder="Enter your password" required>
-                    <div class="px-4 flex items-center bg-gray-100 rounded-r-lg border border-l-0 border-gray-300">
-                        <button type="button" tabindex="-1" class="text-gray-600 hover:text-gray-800 transition" onclick="togglePasswordVisibility('password')">
-                            <i class="fas fa-eye" id="passwordToggle"></i>
-                        </button>
-                    </div>
+                <div class="flex gap-0 border border-gray-300 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow focus-within:ring-2 focus-within:ring-blue-500">
+                    <input type="password" id="password" name="password" class="flex-1 px-4 py-3 bg-white text-gray-800 placeholder-gray-400 focus:outline-none" placeholder="Enter your password" required>
+                    <button type="button" tabindex="-1" class="px-4 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 hover:text-blue-700 hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 border-l border-gray-200 flex items-center justify-center" onclick="togglePasswordVisibility('password')">
+                        <i class="fas fa-eye text-lg" id="passwordToggle"></i>
+                    </button>
                 </div>
             </div>
             

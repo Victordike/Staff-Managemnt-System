@@ -23,6 +23,15 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="overflow-hidden">
+    <!-- Loading Screen -->
+    <div id="loadingScreen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+        <div style="text-align: center;">
+            <div class="spinner" style="width: 60px; height: 60px; margin: 0 auto 20px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <h2 style="color: white; font-size: 24px; font-weight: 600; margin: 0;">Staff Management System</h2>
+            <p style="color: rgba(255,255,255,0.8); margin-top: 10px;">Loading...</p>
+        </div>
+    </div>
+
     <!-- Background Slideshow -->
     <div class="slideshow-container">
         <img src="assets/images/slideshow/slide1.jpg" class="slideshow-image active" alt="Slide 1">
@@ -102,6 +111,14 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
                 transform: translateX(-100%);
             }
         }
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
         .animate-scroll-text {
             animation: scroll-text 20s linear infinite;
         }
@@ -111,5 +128,19 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <script src="assets/js/slideshow.js"></script>
     <script src="assets/js/main.js"></script>
+    
+    <script>
+        // Hide loading screen when page is fully loaded
+        window.addEventListener('load', function() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                loadingScreen.style.opacity = '0';
+                loadingScreen.style.transition = 'opacity 0.5s ease-out';
+                setTimeout(function() {
+                    loadingScreen.style.display = 'none';
+                }, 500);
+            }
+        });
+    </script>
 </body>
 </html>

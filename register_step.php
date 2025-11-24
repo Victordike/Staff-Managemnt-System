@@ -22,18 +22,6 @@ $steps = [
     5 => 'Account Security'
 ];
 
-// Load existing registration data from database
-$existingData = null;
-try {
-    $db = Database::getInstance();
-    $existingData = $db->fetchOne(
-        "SELECT * FROM admin_users WHERE staff_id = ?",
-        [$preUser['staff_id']]
-    );
-} catch (Exception $e) {
-    // User record doesn't exist yet - that's fine
-}
-
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
@@ -41,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Determine action
         if (isset($_POST['save_continue'])) {
-            // Validate and save current step
+            // Validate and save current step to session
             switch ($currentStep) {
                 case 1:
                     // Personal Data validation
@@ -49,31 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $error = 'Please fill in all personal data fields';
                         break;
                     }
-                    
-                    // Save/Update personal data to database
-                    $personal_data = [
+                    $_SESSION['personal_data'] = [
                         'dob' => sanitize($_POST['dob']),
                         'sex' => sanitize($_POST['sex']),
                         'marital_status' => sanitize($_POST['marital_status']),
                         'address' => sanitize($_POST['address']),
                         'lga' => sanitize($_POST['lga']),
                     ];
-                    
-                    if ($existingData) {
-                        // Update existing record
-                        $db->query(
-                            "UPDATE admin_users SET date_of_birth = ?, sex = ?, marital_status = ?, permanent_home_address = ?, lga_origin = ? WHERE staff_id = ?",
-                            [$personal_data['dob'], $personal_data['sex'], $personal_data['marital_status'], $personal_data['address'], $personal_data['lga'], $preUser['staff_id']]
-                        );
-                    } else {
-                        // Create new record with personal data
-                        $db->query(
-                            "INSERT INTO admin_users (staff_id, surname, firstname, date_of_birth, sex, marital_status, permanent_home_address, lga_origin, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                            [$preUser['staff_id'], $preUser['surname'], $preUser['firstname'], $personal_data['dob'], $personal_data['sex'], $personal_data['marital_status'], $personal_data['address'], $personal_data['lga'], 0]
-                        );
-                        $existingData = $db->fetchOne("SELECT * FROM admin_users WHERE staff_id = ?", [$preUser['staff_id']]);
-                    }
-                    
                     $_SESSION['registration_step'] = 2;
                     $success = 'Personal data saved! Proceed to next section.';
                     header('Refresh: 2; url=register_step.php');
@@ -85,13 +55,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $error = 'Please fill in all employment information fields';
                         break;
                     }
-                    
-                    // Update employment data to database
-                    $db->query(
-                        "UPDATE admin_users SET department = ?, position = ?, type_of_employment = ?, date_of_assumption = ?, cadre = ?, phone_number = ?, official_email = ? WHERE staff_id = ?",
-                        [sanitize($_POST['department']), sanitize($_POST['position']), sanitize($_POST['employment_type']), sanitize($_POST['assumption_date']), sanitize($_POST['cadre']), sanitize($_POST['phone']), sanitize($_POST['email']), $preUser['staff_id']]
-                    );
-                    
+                    $_SESSION['employment_data'] = [
+                        'department' => sanitize($_POST['department']),
+                        'position' => sanitize($_POST['position']),
+                        'employment_type' => sanitize($_POST['employment_type']),
+                        'assumption_date' => sanitize($_POST['assumption_date']),
+                        'cadre' => sanitize($_POST['cadre']),
+                        'phone' => sanitize($_POST['phone']),
+                        'email' => sanitize($_POST['email']),
+                    ];
                     $_SESSION['registration_step'] = 3;
                     $success = 'Employment information saved! Proceed to next section.';
                     header('Refresh: 2; url=register_step.php');
@@ -103,13 +75,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $error = 'Please fill in all banking details fields';
                         break;
                     }
-                    
-                    // Update banking data to database
-                    $db->query(
-                        "UPDATE admin_users SET bank_name = ?, account_name = ?, account_number = ?, pfa_name = ?, pfa_pin = ? WHERE staff_id = ?",
-                        [sanitize($_POST['bank_name']), sanitize($_POST['account_name']), sanitize($_POST['account_number']), sanitize($_POST['pfa_name']), sanitize($_POST['pfa_pin']), $preUser['staff_id']]
-                    );
-                    
+                    $_SESSION['banking_data'] = [
+                        'bank_name' => sanitize($_POST['bank_name']),
+                        'account_name' => sanitize($_POST['account_name']),
+                        'account_number' => sanitize($_POST['account_number']),
+                        'pfa_name' => sanitize($_POST['pfa_name']),
+                        'pfa_pin' => sanitize($_POST['pfa_pin']),
+                    ];
                     $_SESSION['registration_step'] = 4;
                     $success = 'Banking details saved! Proceed to next section.';
                     header('Refresh: 2; url=register_step.php');
@@ -121,13 +93,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $error = 'Please fill in all NOK details fields';
                         break;
                     }
-                    
-                    // Update NOK data to database
-                    $db->query(
-                        "UPDATE admin_users SET nok_fullname = ?, nok_phone_number = ?, nok_relationship = ?, nok_address = ? WHERE staff_id = ?",
-                        [sanitize($_POST['nok_name']), sanitize($_POST['nok_phone']), sanitize($_POST['nok_relationship']), sanitize($_POST['nok_address']), $preUser['staff_id']]
-                    );
-                    
+                    $_SESSION['nok_data'] = [
+                        'nok_name' => sanitize($_POST['nok_name']),
+                        'nok_phone' => sanitize($_POST['nok_phone']),
+                        'nok_relationship' => sanitize($_POST['nok_relationship']),
+                        'nok_address' => sanitize($_POST['nok_address']),
+                    ];
                     $_SESSION['registration_step'] = 5;
                     $success = 'NOK details saved! Complete your registration.';
                     header('Refresh: 2; url=register_step.php');
@@ -148,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         break;
                     }
                     
-                    $profilePicture = $existingData['profile_picture'] ?? null;
+                    $profilePicture = null;
                     if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === UPLOAD_ERR_OK) {
                         $allowed = ['image/jpeg', 'image/png', 'image/gif'];
                         $max_size = 5 * 1024 * 1024;
@@ -167,15 +138,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
                     
-                    // Complete registration - update password and set active
+                    // Merge all session data
+                    $personal = $_SESSION['personal_data'] ?? [];
+                    $employment = $_SESSION['employment_data'] ?? [];
+                    $banking = $_SESSION['banking_data'] ?? [];
+                    $nok = $_SESSION['nok_data'] ?? [];
+                    
+                    // Insert into database - NOW with all required fields
                     $db->query(
-                        "UPDATE admin_users SET password = ?, profile_picture = ?, is_active = ? WHERE staff_id = ?",
-                        [hashPassword($_POST['password']), $profilePicture, 1, $preUser['staff_id']]
+                        "INSERT INTO admin_users (
+                            staff_id, surname, firstname,
+                            date_of_birth, sex, marital_status, permanent_home_address, lga_origin,
+                            department, position, type_of_employment, date_of_assumption, cadre,
+                            phone_number, official_email,
+                            bank_name, account_name, account_number, pfa_name, pfa_pin,
+                            nok_fullname, nok_phone_number, nok_relationship, nok_address,
+                            password, profile_picture, is_active
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        [
+                            $preUser['staff_id'],
+                            $preUser['surname'],
+                            $preUser['firstname'],
+                            $personal['dob'] ?? null,
+                            $personal['sex'] ?? null,
+                            $personal['marital_status'] ?? null,
+                            $personal['address'] ?? null,
+                            $personal['lga'] ?? null,
+                            $employment['department'] ?? null,
+                            $employment['position'] ?? null,
+                            $employment['employment_type'] ?? null,
+                            $employment['assumption_date'] ?? null,
+                            $employment['cadre'] ?? null,
+                            $employment['phone'] ?? null,
+                            $employment['email'] ?? null,
+                            $banking['bank_name'] ?? null,
+                            $banking['account_name'] ?? null,
+                            $banking['account_number'] ?? null,
+                            $banking['pfa_name'] ?? null,
+                            $banking['pfa_pin'] ?? null,
+                            $nok['nok_name'] ?? null,
+                            $nok['nok_phone'] ?? null,
+                            $nok['nok_relationship'] ?? null,
+                            $nok['nok_address'] ?? null,
+                            hashPassword($_POST['password']),
+                            $profilePicture,
+                            1
+                        ]
                     );
                     
                     // Cleanup session
                     unset($_SESSION['pre_user']);
                     unset($_SESSION['registration_step']);
+                    unset($_SESSION['personal_data']);
+                    unset($_SESSION['employment_data']);
+                    unset($_SESSION['banking_data']);
+                    unset($_SESSION['nok_data']);
                     
                     $success = 'Registration completed successfully!';
                     header('Refresh: 2; url=admin_login.php');
@@ -193,6 +210,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         error_log($e->getMessage());
     }
 }
+
+// Load data from session for form pre-filling
+$personal = $_SESSION['personal_data'] ?? [];
+$employment = $_SESSION['employment_data'] ?? [];
+$banking = $_SESSION['banking_data'] ?? [];
+$nok = $_SESSION['nok_data'] ?? [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -254,33 +277,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Date of Birth *</label>
-                                <input type="date" name="dob" class="input-field" value="<?php echo htmlspecialchars($existingData['date_of_birth'] ?? ''); ?>" required>
+                                <input type="date" name="dob" class="input-field" value="<?php echo htmlspecialchars($personal['dob'] ?? ''); ?>" required>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Sex *</label>
                                 <select name="sex" class="input-field" required>
                                     <option value="">Select Sex</option>
-                                    <option value="Male" <?php echo ($existingData['sex'] ?? '') === 'Male' ? 'selected' : ''; ?>>Male</option>
-                                    <option value="Female" <?php echo ($existingData['sex'] ?? '') === 'Female' ? 'selected' : ''; ?>>Female</option>
+                                    <option value="Male" <?php echo ($personal['sex'] ?? '') === 'Male' ? 'selected' : ''; ?>>Male</option>
+                                    <option value="Female" <?php echo ($personal['sex'] ?? '') === 'Female' ? 'selected' : ''; ?>>Female</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Marital Status *</label>
                                 <select name="marital_status" class="input-field" required>
                                     <option value="">Select Status</option>
-                                    <option value="Single" <?php echo ($existingData['marital_status'] ?? '') === 'Single' ? 'selected' : ''; ?>>Single</option>
-                                    <option value="Married" <?php echo ($existingData['marital_status'] ?? '') === 'Married' ? 'selected' : ''; ?>>Married</option>
-                                    <option value="Divorced" <?php echo ($existingData['marital_status'] ?? '') === 'Divorced' ? 'selected' : ''; ?>>Divorced</option>
-                                    <option value="Widowed" <?php echo ($existingData['marital_status'] ?? '') === 'Widowed' ? 'selected' : ''; ?>>Widowed</option>
+                                    <option value="Single" <?php echo ($personal['marital_status'] ?? '') === 'Single' ? 'selected' : ''; ?>>Single</option>
+                                    <option value="Married" <?php echo ($personal['marital_status'] ?? '') === 'Married' ? 'selected' : ''; ?>>Married</option>
+                                    <option value="Divorced" <?php echo ($personal['marital_status'] ?? '') === 'Divorced' ? 'selected' : ''; ?>>Divorced</option>
+                                    <option value="Widowed" <?php echo ($personal['marital_status'] ?? '') === 'Widowed' ? 'selected' : ''; ?>>Widowed</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">LGA of Origin *</label>
-                                <input type="text" name="lga" class="input-field" value="<?php echo htmlspecialchars($existingData['lga_origin'] ?? ''); ?>" required>
+                                <input type="text" name="lga" class="input-field" value="<?php echo htmlspecialchars($personal['lga'] ?? ''); ?>" required>
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-gray-700 font-semibold mb-2">Home Address *</label>
-                                <textarea name="address" class="input-field" rows="3" required><?php echo htmlspecialchars($existingData['permanent_home_address'] ?? ''); ?></textarea>
+                                <textarea name="address" class="input-field" rows="3" required><?php echo htmlspecialchars($personal['address'] ?? ''); ?></textarea>
                             </div>
                         </div>
                     </div>
@@ -293,36 +316,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Department *</label>
-                                <input type="text" name="department" class="input-field" value="<?php echo htmlspecialchars($existingData['department'] ?? ''); ?>" required>
+                                <input type="text" name="department" class="input-field" value="<?php echo htmlspecialchars($employment['department'] ?? ''); ?>" required>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Position *</label>
-                                <input type="text" name="position" class="input-field" value="<?php echo htmlspecialchars($existingData['position'] ?? ''); ?>" required>
+                                <input type="text" name="position" class="input-field" value="<?php echo htmlspecialchars($employment['position'] ?? ''); ?>" required>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Employment Type *</label>
                                 <select name="employment_type" class="input-field" required>
                                     <option value="">Select Type</option>
-                                    <option value="Permanent" <?php echo ($existingData['type_of_employment'] ?? '') === 'Permanent' ? 'selected' : ''; ?>>Permanent</option>
-                                    <option value="Contract" <?php echo ($existingData['type_of_employment'] ?? '') === 'Contract' ? 'selected' : ''; ?>>Contract</option>
-                                    <option value="Temporary" <?php echo ($existingData['type_of_employment'] ?? '') === 'Temporary' ? 'selected' : ''; ?>>Temporary</option>
+                                    <option value="Permanent" <?php echo ($employment['employment_type'] ?? '') === 'Permanent' ? 'selected' : ''; ?>>Permanent</option>
+                                    <option value="Contract" <?php echo ($employment['employment_type'] ?? '') === 'Contract' ? 'selected' : ''; ?>>Contract</option>
+                                    <option value="Temporary" <?php echo ($employment['employment_type'] ?? '') === 'Temporary' ? 'selected' : ''; ?>>Temporary</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Date of Assumption *</label>
-                                <input type="date" name="assumption_date" class="input-field" value="<?php echo htmlspecialchars($existingData['date_of_assumption'] ?? ''); ?>" required>
+                                <input type="date" name="assumption_date" class="input-field" value="<?php echo htmlspecialchars($employment['assumption_date'] ?? ''); ?>" required>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Cadre *</label>
-                                <input type="text" name="cadre" class="input-field" value="<?php echo htmlspecialchars($existingData['cadre'] ?? ''); ?>" required>
+                                <input type="text" name="cadre" class="input-field" value="<?php echo htmlspecialchars($employment['cadre'] ?? ''); ?>" required>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Phone Number *</label>
-                                <input type="tel" name="phone" class="input-field" value="<?php echo htmlspecialchars($existingData['phone_number'] ?? ''); ?>" required>
+                                <input type="tel" name="phone" class="input-field" value="<?php echo htmlspecialchars($employment['phone'] ?? ''); ?>" required>
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-gray-700 font-semibold mb-2">Official Email *</label>
-                                <input type="email" name="email" class="input-field" value="<?php echo htmlspecialchars($existingData['official_email'] ?? ''); ?>" required>
+                                <input type="email" name="email" class="input-field" value="<?php echo htmlspecialchars($employment['email'] ?? ''); ?>" required>
                             </div>
                         </div>
                     </div>
@@ -335,23 +358,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Bank Name *</label>
-                                <input type="text" name="bank_name" class="input-field" value="<?php echo htmlspecialchars($existingData['bank_name'] ?? ''); ?>" required>
+                                <input type="text" name="bank_name" class="input-field" value="<?php echo htmlspecialchars($banking['bank_name'] ?? ''); ?>" required>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Account Name *</label>
-                                <input type="text" name="account_name" class="input-field" value="<?php echo htmlspecialchars($existingData['account_name'] ?? ''); ?>" required>
+                                <input type="text" name="account_name" class="input-field" value="<?php echo htmlspecialchars($banking['account_name'] ?? ''); ?>" required>
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-gray-700 font-semibold mb-2">Account Number *</label>
-                                <input type="text" name="account_number" class="input-field" value="<?php echo htmlspecialchars($existingData['account_number'] ?? ''); ?>" required>
+                                <input type="text" name="account_number" class="input-field" value="<?php echo htmlspecialchars($banking['account_number'] ?? ''); ?>" required>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">PFA Name *</label>
-                                <input type="text" name="pfa_name" class="input-field" value="<?php echo htmlspecialchars($existingData['pfa_name'] ?? ''); ?>" required>
+                                <input type="text" name="pfa_name" class="input-field" value="<?php echo htmlspecialchars($banking['pfa_name'] ?? ''); ?>" required>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">PFA Pin *</label>
-                                <input type="text" name="pfa_pin" class="input-field" value="<?php echo htmlspecialchars($existingData['pfa_pin'] ?? ''); ?>" required>
+                                <input type="text" name="pfa_pin" class="input-field" value="<?php echo htmlspecialchars($banking['pfa_pin'] ?? ''); ?>" required>
                             </div>
                         </div>
                     </div>
@@ -364,26 +387,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">NOK Full Name *</label>
-                                <input type="text" name="nok_name" class="input-field" value="<?php echo htmlspecialchars($existingData['nok_fullname'] ?? ''); ?>" required>
+                                <input type="text" name="nok_name" class="input-field" value="<?php echo htmlspecialchars($nok['nok_name'] ?? ''); ?>" required>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">NOK Phone Number *</label>
-                                <input type="tel" name="nok_phone" class="input-field" value="<?php echo htmlspecialchars($existingData['nok_phone_number'] ?? ''); ?>" required>
+                                <input type="tel" name="nok_phone" class="input-field" value="<?php echo htmlspecialchars($nok['nok_phone'] ?? ''); ?>" required>
                             </div>
                             <div>
                                 <label class="block text-gray-700 font-semibold mb-2">Relationship *</label>
                                 <select name="nok_relationship" class="input-field" required>
                                     <option value="">Select Relationship</option>
-                                    <option value="Spouse" <?php echo ($existingData['nok_relationship'] ?? '') === 'Spouse' ? 'selected' : ''; ?>>Spouse</option>
-                                    <option value="Parent" <?php echo ($existingData['nok_relationship'] ?? '') === 'Parent' ? 'selected' : ''; ?>>Parent</option>
-                                    <option value="Child" <?php echo ($existingData['nok_relationship'] ?? '') === 'Child' ? 'selected' : ''; ?>>Child</option>
-                                    <option value="Sibling" <?php echo ($existingData['nok_relationship'] ?? '') === 'Sibling' ? 'selected' : ''; ?>>Sibling</option>
-                                    <option value="Other" <?php echo ($existingData['nok_relationship'] ?? '') === 'Other' ? 'selected' : ''; ?>>Other</option>
+                                    <option value="Spouse" <?php echo ($nok['nok_relationship'] ?? '') === 'Spouse' ? 'selected' : ''; ?>>Spouse</option>
+                                    <option value="Parent" <?php echo ($nok['nok_relationship'] ?? '') === 'Parent' ? 'selected' : ''; ?>>Parent</option>
+                                    <option value="Child" <?php echo ($nok['nok_relationship'] ?? '') === 'Child' ? 'selected' : ''; ?>>Child</option>
+                                    <option value="Sibling" <?php echo ($nok['nok_relationship'] ?? '') === 'Sibling' ? 'selected' : ''; ?>>Sibling</option>
+                                    <option value="Other" <?php echo ($nok['nok_relationship'] ?? '') === 'Other' ? 'selected' : ''; ?>>Other</option>
                                 </select>
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-gray-700 font-semibold mb-2">NOK Address *</label>
-                                <textarea name="nok_address" class="input-field" rows="3" required><?php echo htmlspecialchars($existingData['nok_address'] ?? ''); ?></textarea>
+                                <textarea name="nok_address" class="input-field" rows="3" required><?php echo htmlspecialchars($nok['nok_address'] ?? ''); ?></textarea>
                             </div>
                         </div>
                     </div>

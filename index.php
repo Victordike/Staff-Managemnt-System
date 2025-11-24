@@ -39,8 +39,8 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     <div class="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
         <!-- School Logo -->
         <div class="mb-6 animate-fade-in">
-            <div class="border-4 border-white rounded-3xl p-3 inline-block">
-                <img src="assets/images/logo.jpg" alt="Federal Polytechnic of Oil and Gas Logo" class="w-32 h-32 md:w-40 md:h-40 object-contain mx-auto">
+            <div class="border-4 border-white rounded-full p-3 inline-block">
+                <img src="assets/images/logo.jpg" alt="Federal Polytechnic of Oil and Gas Logo" class="w-32 h-32 md:w-40 md:h-40 object-contain mx-auto rounded-full">
             </div>
         </div>
         

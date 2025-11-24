@@ -81,11 +81,11 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
         <div class="text-center py-6">
             <h3 class="text-xl font-semibold mb-6 text-gray-800">Select Login Type</h3>
             <div class="flex flex-col gap-4">
-                <a href="admin_login.php" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition duration-300 flex items-center justify-center gap-3">
+                <a href="admin_login.php" id="adminLoginLink" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition duration-300 flex items-center justify-center gap-3">
                     <i class="fas fa-user-tie text-2xl"></i>
                     <span>Login as Admin User</span>
                 </a>
-                <a href="superadmin_login.php" class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-lg transition duration-300 flex items-center justify-center gap-3">
+                <a href="superadmin_login.php" id="superadminLoginLink" class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 px-6 rounded-lg transition duration-300 flex items-center justify-center gap-3">
                     <i class="fas fa-user-shield text-2xl"></i>
                     <span>Login as Super Admin</span>
                 </a>
@@ -130,9 +130,10 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     <script src="assets/js/main.js"></script>
     
     <script>
+        const loadingScreen = document.getElementById('loadingScreen');
+
         // Hide loading screen when page is fully loaded
         window.addEventListener('load', function() {
-            const loadingScreen = document.getElementById('loadingScreen');
             if (loadingScreen) {
                 loadingScreen.style.opacity = '0';
                 loadingScreen.style.transition = 'opacity 0.5s ease-out';
@@ -141,6 +142,26 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
                 }, 500);
             }
         });
+
+        // Show loading screen when login links are clicked
+        const adminLoginLink = document.getElementById('adminLoginLink');
+        const superadminLoginLink = document.getElementById('superadminLoginLink');
+
+        if (adminLoginLink) {
+            adminLoginLink.addEventListener('click', function(e) {
+                loadingScreen.style.display = 'flex';
+                loadingScreen.style.opacity = '1';
+                loadingScreen.style.transition = 'opacity 0.3s ease-in';
+            });
+        }
+
+        if (superadminLoginLink) {
+            superadminLoginLink.addEventListener('click', function(e) {
+                loadingScreen.style.display = 'flex';
+                loadingScreen.style.opacity = '1';
+                loadingScreen.style.transition = 'opacity 0.3s ease-in';
+            });
+        }
     </script>
 </body>
 </html>

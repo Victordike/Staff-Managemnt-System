@@ -119,7 +119,7 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                     <button id="cancelBtn" class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition">
                         Cancel
                     </button>
-                    <button id="confirmBtn" class="px-4 py-2 bg-red-600 dark:bg-red-500 text-white rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition font-semibold">
+                    <button id="confirmBtn" class="px-4 py-2 text-white rounded-lg transition font-semibold" style="background-color: #dc2626;" onmouseover="this.style.backgroundColor='#b91c1c'" onmouseout="this.style.backgroundColor='#dc2626'">
                         Confirm
                     </button>
                 </div>

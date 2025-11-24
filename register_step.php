@@ -9,7 +9,7 @@ if (!isset($_SESSION['pre_user'])) {
 }
 
 $preUser = $_SESSION['pre_user'];
-$currentStep = isset($_SESSION['registration_step']) ? intval($_SESSION['registration_step']) : 1;
+$db = Database::getInstance();
 $error = '';
 $success = '';
 
@@ -22,34 +22,99 @@ $steps = [
     5 => 'Account Security'
 ];
 
+// Load draft data from database on page load
+$draft = null;
+try {
+    $draft = $db->fetchOne("SELECT * FROM registration_draft WHERE staff_id = ?", [$preUser['staff_id']]);
+} catch (Exception $e) {
+    error_log("Draft load error: " . $e->getMessage());
+}
+
+// Determine current step - prefer session, fallback to draft, default to 1
+$currentStep = isset($_SESSION['registration_step']) ? intval($_SESSION['registration_step']) : ($draft ? intval($draft['current_step']) : 1);
+
+// Load data from both session and database for form pre-filling
+$personal = $_SESSION['personal_data'] ?? ($draft ? [
+    'dob' => $draft['date_of_birth'],
+    'sex' => $draft['sex'],
+    'marital_status' => $draft['marital_status'],
+    'address' => $draft['permanent_home_address'],
+    'lga' => $draft['lga_origin'],
+] : []);
+
+$employment = $_SESSION['employment_data'] ?? ($draft ? [
+    'department' => $draft['department'],
+    'position' => $draft['position'],
+    'employment_type' => $draft['type_of_employment'],
+    'assumption_date' => $draft['date_of_assumption'],
+    'cadre' => $draft['cadre'],
+    'phone' => $draft['phone_number'],
+    'email' => $draft['official_email'],
+] : []);
+
+$banking = $_SESSION['banking_data'] ?? ($draft ? [
+    'bank_name' => $draft['bank_name'],
+    'account_name' => $draft['account_name'],
+    'account_number' => $draft['account_number'],
+    'pfa_name' => $draft['pfa_name'],
+    'pfa_pin' => $draft['pfa_pin'],
+] : []);
+
+$nok = $_SESSION['nok_data'] ?? ($draft ? [
+    'nok_name' => $draft['nok_fullname'],
+    'nok_phone' => $draft['nok_phone_number'],
+    'nok_relationship' => $draft['nok_relationship'],
+    'nok_address' => $draft['nok_address'],
+] : []);
+
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        $db = Database::getInstance();
-        
         $saveOnly = isset($_POST['save_only']);
         $moveNext = isset($_POST['next_step']);
         $movePrev = isset($_POST['prev_step']);
+        $exitReg = isset($_POST['exit_registration']);
         
-        if ($saveOnly || $moveNext) {
-            // Save current step data
+        if ($saveOnly || $moveNext || $exitReg) {
+            // Validate and save current step
             switch ($currentStep) {
                 case 1:
                     if (empty($_POST['dob']) || empty($_POST['sex']) || empty($_POST['marital_status']) || empty($_POST['address']) || empty($_POST['lga'])) {
                         $error = 'Please fill in all personal data fields';
                         break;
                     }
-                    $_SESSION['personal_data'] = [
+                    
+                    $personal = [
                         'dob' => sanitize($_POST['dob']),
                         'sex' => sanitize($_POST['sex']),
                         'marital_status' => sanitize($_POST['marital_status']),
                         'address' => sanitize($_POST['address']),
                         'lga' => sanitize($_POST['lga']),
                     ];
+                    $_SESSION['personal_data'] = $personal;
+                    
+                    // Save to database
+                    $existingDraft = $db->fetchOne("SELECT id FROM registration_draft WHERE staff_id = ?", [$preUser['staff_id']]);
+                    if ($existingDraft) {
+                        $db->query(
+                            "UPDATE registration_draft SET date_of_birth = ?, sex = ?, marital_status = ?, permanent_home_address = ?, lga_origin = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE staff_id = ?",
+                            [$personal['dob'], $personal['sex'], $personal['marital_status'], $personal['address'], $personal['lga'], $exitReg ? $currentStep : ($moveNext ? 2 : $currentStep), $preUser['staff_id']]
+                        );
+                    } else {
+                        $db->query(
+                            "INSERT INTO registration_draft (staff_id, surname, firstname, date_of_birth, sex, marital_status, permanent_home_address, lga_origin, current_step) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            [$preUser['staff_id'], $preUser['surname'], $preUser['firstname'], $personal['dob'], $personal['sex'], $personal['marital_status'], $personal['address'], $personal['lga'], $exitReg ? 1 : ($moveNext ? 2 : 1)]
+                        );
+                    }
+                    
                     $success = 'Personal data saved!';
                     if ($moveNext) {
                         $_SESSION['registration_step'] = 2;
                         header('Refresh: 2; url=register_step.php');
+                    } elseif ($exitReg) {
+                        $_SESSION['registration_step'] = 1;
+                        $success = 'Your registration has been saved. You can continue later.';
+                        header('Refresh: 2; url=admin_login.php');
                     }
                     break;
                     
@@ -58,7 +123,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $error = 'Please fill in all employment information fields';
                         break;
                     }
-                    $_SESSION['employment_data'] = [
+                    
+                    $employment = [
                         'department' => sanitize($_POST['department']),
                         'position' => sanitize($_POST['position']),
                         'employment_type' => sanitize($_POST['employment_type']),
@@ -67,10 +133,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'phone' => sanitize($_POST['phone']),
                         'email' => sanitize($_POST['email']),
                     ];
+                    $_SESSION['employment_data'] = $employment;
+                    
+                    $existingDraft = $db->fetchOne("SELECT id FROM registration_draft WHERE staff_id = ?", [$preUser['staff_id']]);
+                    if ($existingDraft) {
+                        $db->query(
+                            "UPDATE registration_draft SET department = ?, position = ?, type_of_employment = ?, date_of_assumption = ?, cadre = ?, phone_number = ?, official_email = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE staff_id = ?",
+                            [$employment['department'], $employment['position'], $employment['employment_type'], $employment['assumption_date'], $employment['cadre'], $employment['phone'], $employment['email'], $exitReg ? $currentStep : ($moveNext ? 3 : $currentStep), $preUser['staff_id']]
+                        );
+                    }
+                    
                     $success = 'Employment information saved!';
                     if ($moveNext) {
                         $_SESSION['registration_step'] = 3;
                         header('Refresh: 2; url=register_step.php');
+                    } elseif ($exitReg) {
+                        $_SESSION['registration_step'] = 2;
+                        $success = 'Your registration has been saved. You can continue later.';
+                        header('Refresh: 2; url=admin_login.php');
                     }
                     break;
                     
@@ -79,17 +159,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $error = 'Please fill in all banking details fields';
                         break;
                     }
-                    $_SESSION['banking_data'] = [
+                    
+                    $banking = [
                         'bank_name' => sanitize($_POST['bank_name']),
                         'account_name' => sanitize($_POST['account_name']),
                         'account_number' => sanitize($_POST['account_number']),
                         'pfa_name' => sanitize($_POST['pfa_name']),
                         'pfa_pin' => sanitize($_POST['pfa_pin']),
                     ];
+                    $_SESSION['banking_data'] = $banking;
+                    
+                    $existingDraft = $db->fetchOne("SELECT id FROM registration_draft WHERE staff_id = ?", [$preUser['staff_id']]);
+                    if ($existingDraft) {
+                        $db->query(
+                            "UPDATE registration_draft SET bank_name = ?, account_name = ?, account_number = ?, pfa_name = ?, pfa_pin = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE staff_id = ?",
+                            [$banking['bank_name'], $banking['account_name'], $banking['account_number'], $banking['pfa_name'], $banking['pfa_pin'], $exitReg ? $currentStep : ($moveNext ? 4 : $currentStep), $preUser['staff_id']]
+                        );
+                    }
+                    
                     $success = 'Banking details saved!';
                     if ($moveNext) {
                         $_SESSION['registration_step'] = 4;
                         header('Refresh: 2; url=register_step.php');
+                    } elseif ($exitReg) {
+                        $_SESSION['registration_step'] = 3;
+                        $success = 'Your registration has been saved. You can continue later.';
+                        header('Refresh: 2; url=admin_login.php');
                     }
                     break;
                     
@@ -98,16 +193,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $error = 'Please fill in all NOK details fields';
                         break;
                     }
-                    $_SESSION['nok_data'] = [
+                    
+                    $nok = [
                         'nok_name' => sanitize($_POST['nok_name']),
                         'nok_phone' => sanitize($_POST['nok_phone']),
                         'nok_relationship' => sanitize($_POST['nok_relationship']),
                         'nok_address' => sanitize($_POST['nok_address']),
                     ];
+                    $_SESSION['nok_data'] = $nok;
+                    
+                    $existingDraft = $db->fetchOne("SELECT id FROM registration_draft WHERE staff_id = ?", [$preUser['staff_id']]);
+                    if ($existingDraft) {
+                        $db->query(
+                            "UPDATE registration_draft SET nok_fullname = ?, nok_phone_number = ?, nok_relationship = ?, nok_address = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE staff_id = ?",
+                            [$nok['nok_name'], $nok['nok_phone'], $nok['nok_relationship'], $nok['nok_address'], $exitReg ? $currentStep : ($moveNext ? 5 : $currentStep), $preUser['staff_id']]
+                        );
+                    }
+                    
                     $success = 'NOK details saved!';
                     if ($moveNext) {
                         $_SESSION['registration_step'] = 5;
                         header('Refresh: 2; url=register_step.php');
+                    } elseif ($exitReg) {
+                        $_SESSION['registration_step'] = 4;
+                        $success = 'Your registration has been saved. You can continue later.';
+                        header('Refresh: 2; url=admin_login.php');
                     }
                     break;
                     
@@ -122,6 +232,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     if (strlen($_POST['password']) < 8) {
                         $error = 'Password must be at least 8 characters';
+                        break;
+                    }
+                    
+                    if ($exitReg) {
+                        // Save password to draft and exit
+                        $existingDraft = $db->fetchOne("SELECT id FROM registration_draft WHERE staff_id = ?", [$preUser['staff_id']]);
+                        if ($existingDraft) {
+                            $db->query(
+                                "UPDATE registration_draft SET current_step = 5, updated_at = CURRENT_TIMESTAMP WHERE staff_id = ?",
+                                [$preUser['staff_id']]
+                            );
+                        }
+                        $_SESSION['registration_step'] = 5;
+                        $success = 'Your registration has been saved. You can continue later.';
+                        header('Refresh: 2; url=admin_login.php');
                         break;
                     }
                     
@@ -144,11 +269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
                     
-                    $personal = $_SESSION['personal_data'] ?? [];
-                    $employment = $_SESSION['employment_data'] ?? [];
-                    $banking = $_SESSION['banking_data'] ?? [];
-                    $nok = $_SESSION['nok_data'] ?? [];
-                    
+                    // Complete registration - move draft to admin_users
                     $db->query(
                         "INSERT INTO admin_users (
                             staff_id, surname, firstname,
@@ -190,6 +311,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ]
                     );
                     
+                    // Delete draft
+                    $db->query("DELETE FROM registration_draft WHERE staff_id = ?", [$preUser['staff_id']]);
+                    
+                    // Cleanup session
                     unset($_SESSION['pre_user']);
                     unset($_SESSION['registration_step']);
                     unset($_SESSION['personal_data']);
@@ -213,12 +338,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         error_log($e->getMessage());
     }
 }
-
-// Load data from session for form pre-filling
-$personal = $_SESSION['personal_data'] ?? [];
-$employment = $_SESSION['employment_data'] ?? [];
-$banking = $_SESSION['banking_data'] ?? [];
-$nok = $_SESSION['nok_data'] ?? [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -440,24 +559,28 @@ $nok = $_SESSION['nok_data'] ?? [];
                 <?php endif; ?>
                 
                 <!-- Navigation Buttons -->
-                <div class="flex gap-3 pt-6 border-t">
+                <div class="flex gap-2 pt-6 border-t flex-wrap">
                     <?php if ($currentStep > 1): ?>
-                        <button type="submit" name="prev_step" class="btn-secondary flex-1" formnovalidate>
+                        <button type="submit" name="prev_step" class="btn-secondary flex-1 min-w-[100px]" formnovalidate>
                             <i class="fas fa-arrow-left mr-2"></i>Previous
                         </button>
                     <?php endif; ?>
                     
-                    <button type="submit" name="save_only" class="btn-secondary flex-1" style="background-color: #6366f1; color: white; border: none;">
+                    <button type="submit" name="save_only" class="flex-1 min-w-[100px]" style="background-color: #6366f1; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
                         <i class="fas fa-save mr-2"></i>Save
                     </button>
                     
+                    <button type="submit" name="exit_registration" class="flex-1 min-w-[100px]" style="background-color: #f97316; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;" formnovalidate>
+                        <i class="fas fa-sign-out-alt mr-2"></i>Exit & Save
+                    </button>
+                    
                     <?php if ($currentStep < count($steps)): ?>
-                        <button type="submit" name="next_step" class="btn-primary flex-1">
+                        <button type="submit" name="next_step" class="btn-primary flex-1 min-w-[100px]">
                             Next <i class="fas fa-arrow-right ml-2"></i>
                         </button>
                     <?php else: ?>
-                        <button type="submit" name="next_step" class="btn-primary flex-1">
-                            <i class="fas fa-check-circle mr-2"></i>Complete Registration
+                        <button type="submit" name="next_step" class="btn-primary flex-1 min-w-[100px]">
+                            <i class="fas fa-check-circle mr-2"></i>Complete
                         </button>
                     <?php endif; ?>
                 </div>

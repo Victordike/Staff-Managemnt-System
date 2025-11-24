@@ -363,23 +363,27 @@ function deleteUser(userId) {
     const user = usersData.find(u => u.id === userId);
     if (!user) return;
     
-    if (confirm(`Are you sure you want to delete ${user.firstname} ${user.surname}?`)) {
-        fetch('api/delete_user.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: userId })
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                showDialog('Success', 'User deleted successfully', 'success');
-                setTimeout(() => loadUsers(), 1500);
-            } else {
-                showDialog('Error', data.message, 'error');
-            }
-        })
-        .catch(e => showDialog('Error', 'Failed to delete user', 'error'));
-    }
+    showConfirmDialog(
+        'Delete User',
+        `Are you sure you want to delete ${user.firstname} ${user.surname}? This action cannot be undone.`,
+        function() {
+            fetch('api/delete_user.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: userId })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showDialog('Success', 'User deleted successfully', 'success');
+                    setTimeout(() => loadUsers(), 1500);
+                } else {
+                    showDialog('Error', data.message, 'error');
+                }
+            })
+            .catch(e => showDialog('Error', 'Failed to delete user', 'error'));
+        }
+    );
 }
 
 function filterTable() {

@@ -136,11 +136,13 @@ try {
                                     <a href="<?php echo htmlspecialchars($memo['file_path']); ?>" download class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition" title="Download">
                                         <i class="fas fa-download"></i>
                                     </a>
-                                    <form method="POST" class="inline-block" onsubmit="return confirm('Delete this memo?');">
+                                    <button type="button" onclick="deleteMemoConfirm(<?php echo $memo['id']; ?>)" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    
+                                    <form id="deleteMemoForm<?php echo $memo['id']; ?>" method="POST" class="hidden">
                                         <input type="hidden" name="memo_id" value="<?php echo $memo['id']; ?>">
-                                        <button type="submit" name="delete_memo" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        <button type="submit" name="delete_memo"></button>
                                     </form>
                                 </td>
                             </tr>
@@ -151,5 +153,17 @@ try {
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+function deleteMemoConfirm(memoId) {
+    showConfirmDialog(
+        'Delete Memo',
+        'Are you sure you want to delete this memo? This action cannot be undone.',
+        function() {
+            document.getElementById('deleteMemoForm' + memoId).submit();
+        }
+    );
+}
+</script>
 
 <?php require_once 'includes/foot.php'; ?>

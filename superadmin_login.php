@@ -53,10 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="card max-w-md w-full">
         <div class="text-center mb-8">
             <div class="mb-4">
-                <i class="fas fa-user-shield text-6xl text-indigo-600"></i>
+                <img src="img/dfdf.jpeg" alt="School Logo" class="w-24 h-24 mx-auto rounded-lg shadow-md">
             </div>
+            <h2 class="text-2xl font-bold text-indigo-600 mb-2">Federal Polytechnic of Oil and Gas</h2>
             <h1 class="text-3xl font-bold text-gray-800 mb-2">Super Admin Login</h1>
-            <p class="text-gray-600">Federal Polytechnic of Oil and Gas</p>
         </div>
         
         <?php if ($error): ?>

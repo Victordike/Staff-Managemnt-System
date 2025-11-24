@@ -100,3 +100,20 @@
     background-color: rgba(96, 165, 250, 0.2);
     color: rgb(96, 165, 250);
 }
+
+/* Collapsed sidebar icon alignment for accordions */
+.sidebar.collapsed .accordion-toggle,
+.sidebar.collapsed .accordion-link {
+    justify-content: center;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.sidebar.collapsed .accordion-link {
+    padding-left: 1rem;
+}
+
+.sidebar.collapsed .accordion-icon {
+    position: absolute;
+    right: 1rem;
+}

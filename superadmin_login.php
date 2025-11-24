@@ -47,15 +47,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Super Admin Login - Staff Management System</title>
     <link rel="stylesheet" href="assets/css/output.css">
+    <link rel="stylesheet" href="assets/css/loading.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gradient-to-br from-indigo-600 to-purple-800 min-h-screen flex items-center justify-center px-4">
-    <!-- Loading Screen -->
-    <div id="loadingScreen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; z-index: 9999;">
-        <div style="text-align: center;">
-            <div class="spinner" style="width: 60px; height: 60px; margin: 0 auto 20px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-            <h2 style="color: white; font-size: 24px; font-weight: 600; margin: 0;">Staff Management System</h2>
-            <p style="color: rgba(255,255,255,0.8); margin-top: 10px;">Loading...</p>
+    <!-- Advanced Loading Screen -->
+    <div id="loadingScreen" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-glow-card">
+                <div class="spinner-premium">
+                    <span></span>
+                </div>
+                <h2 class="loading-text">Staff Management System</h2>
+                <p class="loading-subtext">Authenticating<span class="loading-dots"></span></p>
+                <div class="loading-progress">
+                    <div class="progress-bar"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -106,17 +114,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </form>
     </div>
-    <style>
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-    </style>
-
     <script>
     function togglePasswordVisibility(fieldId) {
         const passwordField = document.getElementById(fieldId);
@@ -137,9 +134,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     window.addEventListener('load', function() {
         const loadingScreen = document.getElementById('loadingScreen');
         if (loadingScreen) {
-            loadingScreen.style.opacity = '0';
-            loadingScreen.style.transition = 'opacity 0.5s ease-out';
-            loadingScreen.style.pointerEvents = 'none';
+            setTimeout(function() {
+                loadingScreen.classList.add('hidden');
+            }, 500);
         }
     });
     </script>

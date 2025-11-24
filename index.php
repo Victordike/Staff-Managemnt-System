@@ -19,16 +19,24 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff Management System - Federal Polytechnic of Oil and Gas</title>
     <link rel="stylesheet" href="assets/css/output.css">
+    <link rel="stylesheet" href="assets/css/loading.css">
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="overflow-hidden">
-    <!-- Loading Screen -->
-    <div id="loadingScreen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; z-index: 9999;">
-        <div style="text-align: center;">
-            <div class="spinner" style="width: 60px; height: 60px; margin: 0 auto 20px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-            <h2 style="color: white; font-size: 24px; font-weight: 600; margin: 0;">Staff Management System</h2>
-            <p style="color: rgba(255,255,255,0.8); margin-top: 10px;">Loading...</p>
+    <!-- Advanced Loading Screen -->
+    <div id="loadingScreen" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-glow-card">
+                <div class="spinner-premium">
+                    <span></span>
+                </div>
+                <h2 class="loading-text">Staff Management System</h2>
+                <p class="loading-subtext">Initializing<span class="loading-dots"></span></p>
+                <div class="loading-progress">
+                    <div class="progress-bar"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -103,22 +111,6 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     </div>
 
     <style>
-        @keyframes scroll-text {
-            0% {
-                transform: translateX(100%);
-            }
-            100% {
-                transform: translateX(-100%);
-            }
-        }
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
         .animate-scroll-text {
             animation: scroll-text 20s linear infinite;
         }
@@ -134,11 +126,11 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
 
         // Hide loading screen when page is fully loaded
         window.addEventListener('load', function() {
-            if (loadingScreen) {
-                loadingScreen.style.opacity = '0';
-                loadingScreen.style.transition = 'opacity 0.5s ease-out';
-                loadingScreen.style.pointerEvents = 'none';
-            }
+            setTimeout(function() {
+                if (loadingScreen) {
+                    loadingScreen.classList.add('hidden');
+                }
+            }, 500);
         });
 
         // Show loading screen when login links are clicked
@@ -147,17 +139,13 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
 
         if (adminLoginLink) {
             adminLoginLink.addEventListener('click', function(e) {
-                loadingScreen.style.display = 'flex';
-                loadingScreen.style.opacity = '1';
-                loadingScreen.style.transition = 'opacity 0.3s ease-in';
+                loadingScreen.classList.remove('hidden');
             });
         }
 
         if (superadminLoginLink) {
             superadminLoginLink.addEventListener('click', function(e) {
-                loadingScreen.style.display = 'flex';
-                loadingScreen.style.opacity = '1';
-                loadingScreen.style.transition = 'opacity 0.3s ease-in';
+                loadingScreen.classList.remove('hidden');
             });
         }
     </script>

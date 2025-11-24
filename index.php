@@ -25,11 +25,11 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
 <body class="overflow-hidden">
     <!-- Background Slideshow -->
     <div class="slideshow-container">
-        <img src="assets/images/slideshow/slide1.svg" class="slideshow-image active" alt="Slide 1">
-        <img src="assets/images/slideshow/slide2.svg" class="slideshow-image" alt="Slide 2">
-        <img src="assets/images/slideshow/slide3.svg" class="slideshow-image" alt="Slide 3">
-        <img src="assets/images/slideshow/slide4.svg" class="slideshow-image" alt="Slide 4">
-        <img src="assets/images/slideshow/slide5.svg" class="slideshow-image" alt="Slide 5">
+        <img src="assets/images/slideshow/slide1.jpg" class="slideshow-image active" alt="Slide 1">
+        <img src="assets/images/slideshow/slide2.jpg" class="slideshow-image" alt="Slide 2">
+        <img src="assets/images/slideshow/slide3.jpg" class="slideshow-image" alt="Slide 3">
+        <img src="assets/images/slideshow/slide4.jpg" class="slideshow-image" alt="Slide 4">
+        <img src="assets/images/slideshow/slide5.jpg" class="slideshow-image" alt="Slide 5">
     </div>
     
     <!-- Dark Blue Overlay -->
@@ -39,7 +39,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
     <div class="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
         <!-- School Logo -->
         <div class="mb-6 animate-fade-in">
-            <img src="assets/images/logo.png" alt="Federal Polytechnic of Oil and Gas Logo" class="w-32 h-32 md:w-40 md:h-40 object-contain mx-auto">
+            <img src="assets/images/logo.jpg" alt="Federal Polytechnic of Oil and Gas Logo" class="w-32 h-32 md:w-40 md:h-40 object-contain mx-auto">
         </div>
         
         <!-- School Name -->

@@ -79,7 +79,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="password" class="block text-gray-700 font-semibold mb-2">
                     <i class="fas fa-lock mr-2"></i>Password
                 </label>
-                <input type="password" id="password" name="password" class="input-field" placeholder="Enter your password" required>
+                <div class="relative">
+                    <input type="password" id="password" name="password" class="input-field w-full pr-10" placeholder="Enter your password" required>
+                    <button type="button" class="absolute right-3 top-3 text-gray-600 hover:text-gray-800 transition" onclick="togglePasswordVisibility('password')">
+                        <i class="fas fa-eye" id="passwordToggle"></i>
+                    </button>
+                </div>
             </div>
             
             <button type="submit" class="w-full btn-primary mb-4">
@@ -93,5 +98,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </form>
     </div>
+    <script>
+    function togglePasswordVisibility(fieldId) {
+        const passwordField = document.getElementById(fieldId);
+        const toggleIcon = document.getElementById(fieldId + 'Toggle');
+        
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordField.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    }
+    </script>
 </body>
 </html>

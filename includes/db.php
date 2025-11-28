@@ -7,8 +7,8 @@ class Database {
     
     private function __construct() {
         try {
-            // Connect to PostgreSQL database
-            $dsn = "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME;
+            // Connect to PostgreSQL database with SSL mode for security
+            $dsn = "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";sslmode=require";
             $this->conn = new PDO($dsn, DB_USER, DB_PASS, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -17,7 +17,7 @@ class Database {
             // Log detailed error for debugging
             error_log("Database Connection Error: " . $e->getMessage());
             error_log("DSN: pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME);
-            die("Connection failed: Unable to connect to PostgreSQL database.\n\nError: " . $e->getMessage());
+            die("Unable to connect to PostgreSQL database. Error: " . $e->getMessage());
         }
     }
     

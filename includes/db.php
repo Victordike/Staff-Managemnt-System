@@ -7,8 +7,8 @@ class Database {
     
     private function __construct() {
         try {
-            // Connect to PostgreSQL database with SSL mode for security
-            $dsn = "pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";sslmode=require";
+            // Connect to MySQL database
+            $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
             $this->conn = new PDO($dsn, DB_USER, DB_PASS, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -16,8 +16,8 @@ class Database {
         } catch(PDOException $e) {
             // Log detailed error for debugging
             error_log("Database Connection Error: " . $e->getMessage());
-            error_log("DSN: pgsql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME);
-            die("Unable to connect to PostgreSQL database. Error: " . $e->getMessage());
+            error_log("DSN: mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME);
+            die("Unable to connect to MySQL database. Error: " . $e->getMessage());
         }
     }
     
@@ -51,6 +51,15 @@ class Database {
     public function fetchOne($sql, $params = []) {
         $stmt = $this->query($sql, $params);
         return $stmt->fetch();
+    }
+    
+    public function prepare($sql) {
+        try {
+            return $this->conn->prepare($sql);
+        } catch(PDOException $e) {
+            error_log("Prepare error: " . $e->getMessage());
+            throw $e;
+        }
     }
     
     public function lastInsertId() {

@@ -63,13 +63,30 @@ try {
     
     // Add new roles
     foreach ($rolesToAdd as $role) {
-        $addStmt = $db->prepare("
-            INSERT INTO admin_roles (admin_id, role_name, assigned_by) 
-            VALUES (?, ?, ?)
-            ON CONFLICT (admin_id, role_name) DO UPDATE 
-            SET removed_at = NULL, assigned_at = NOW()
+        // Check if role exists but is removed
+        $checkStmt = $db->prepare("
+            SELECT id FROM admin_roles 
+            WHERE admin_id = ? AND role_name = ? AND removed_at IS NOT NULL
         ");
-        $addStmt->execute([$adminId, $role, $superAdminId]);
+        $checkStmt->execute([$adminId, $role]);
+        $existingRole = $checkStmt->fetch();
+        
+        if ($existingRole) {
+            // Restore removed role
+            $updateStmt = $db->prepare("
+                UPDATE admin_roles 
+                SET removed_at = NULL, assigned_at = NOW(), assigned_by = ?
+                WHERE admin_id = ? AND role_name = ?
+            ");
+            $updateStmt->execute([$superAdminId, $adminId, $role]);
+        } else {
+            // Insert new role
+            $insertStmt = $db->prepare("
+                INSERT INTO admin_roles (admin_id, role_name, assigned_by) 
+                VALUES (?, ?, ?)
+            ");
+            $insertStmt->execute([$adminId, $role, $superAdminId]);
+        }
     }
     
     // Commit transaction

@@ -87,13 +87,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $admins = $db->fetchAll("SELECT id FROM admin_users WHERE is_active = true");
                                 foreach ($admins as $admin) {
                                     $db->query(
-                                        "INSERT INTO memo_recipients (memo_id, admin_id) VALUES (?, ?)",
+                                        "INSERT INTO memo_recipients (memo_id, recipient_id) VALUES (?, ?)",
                                         [$memo_id, $admin['id']]
                                     );
                                 }
                             } else if ($recipient_id) {
                                 $db->query(
-                                    "INSERT INTO memo_recipients (memo_id, admin_id) VALUES (?, ?)",
+                                    "INSERT INTO memo_recipients (memo_id, recipient_id) VALUES (?, ?)",
                                     [$memo_id, $recipient_id]
                                 );
                             }

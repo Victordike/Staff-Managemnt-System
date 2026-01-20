@@ -19,7 +19,7 @@ $admins = $db->prepare("
         au.staff_id,
         au.position,
         au.department,
-        string_agg(ar.role_name, ', ') as assigned_roles
+        GROUP_CONCAT(ar.role_name SEPARATOR ', ') as assigned_roles
     FROM admin_users au
     LEFT JOIN admin_roles ar ON au.id = ar.admin_id AND ar.removed_at IS NULL
     WHERE au.is_active = TRUE
@@ -36,10 +36,11 @@ $availableRoles = [
     'Registrar',
     'Bursar',
     'Academic Dean',
+    'Dean',
+    'HOD',
     'Director of ICT',
-    'HOD Engineering',
-    'HOD Management',
-    'Provost'
+    'Provost',
+    'Establishment'
 ];
 ?>
 

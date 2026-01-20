@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                 continue;
             }
             
-            $staffId = $row['Staff ID'];
+            $staffId = trim($row['Staff ID']);
             
             try {
                 // Check if already registered as admin user
@@ -58,13 +58,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                          WHERE staff_id = ?"
                     );
                     $updateStmt->execute([
-                        $row['Surname'] ?? '',
-                        $row['Firstname'] ?? '',
-                        $row['Othername'] ?? '',
-                        $row['Salary Structure'] ?? '',
-                        $row['GL'] ?? '',
-                        $row['STEP'] ?? '',
-                        $row['Rank'] ?? '',
+                        trim($row['Surname'] ?? ''),
+                        trim($row['Firstname'] ?? ''),
+                        trim($row['Othername'] ?? ''),
+                        trim($row['Salary Structure'] ?? ''),
+                        trim($row['GL'] ?? ''),
+                        trim($row['STEP'] ?? ''),
+                        trim($row['Rank'] ?? ''),
                         $staffId
                     ]);
                     $importDetails[] = "↻ {$row['Firstname']} {$row['Surname']} (ID: {$staffId}) - Updated";
@@ -75,14 +75,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
                     );
                     $insertStmt->execute([
-                        $row['Surname'] ?? '',
-                        $row['Firstname'] ?? '',
-                        $row['Othername'] ?? '',
+                        trim($row['Surname'] ?? ''),
+                        trim($row['Firstname'] ?? ''),
+                        trim($row['Othername'] ?? ''),
                         $staffId,
-                        $row['Salary Structure'] ?? '',
-                        $row['GL'] ?? '',
-                        $row['STEP'] ?? '',
-                        $row['Rank'] ?? ''
+                        trim($row['Salary Structure'] ?? ''),
+                        trim($row['GL'] ?? ''),
+                        trim($row['STEP'] ?? ''),
+                        trim($row['Rank'] ?? '')
                     ]);
                     $importDetails[] = "✓ {$row['Firstname']} {$row['Surname']} (ID: {$staffId}) - Added";
                 }

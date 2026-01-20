@@ -19,20 +19,27 @@ try {
     } else {
         // Get only UNREAD memos received by this admin (deduplicated by file_path, showing only most recent)
         $memos = $db->fetchAll(
-            "SELECT DISTINCT ON (m.file_path) m.*, u.firstname, u.lastname, mr.read_at
+            "SELECT m.*, au.firstname, au.surname as lastname, mr.read_at
              FROM memos m
              JOIN memo_recipients mr ON m.id = mr.memo_id
-             JOIN users u ON m.sender_id = u.id
-             WHERE mr.admin_id = ? AND mr.read_at IS NULL
-             ORDER BY m.file_path, m.created_at DESC",
-            [$admin_id]
+             JOIN admin_users au ON m.sender_id = au.id
+             WHERE mr.recipient_id = ? AND mr.read_at IS NULL
+             AND m.id IN (
+                SELECT MAX(m2.id)
+                FROM memos m2
+                JOIN memo_recipients mr2 ON m2.id = mr2.memo_id
+                WHERE mr2.recipient_id = ? AND mr2.read_at IS NULL
+                GROUP BY m2.file_path
+             )
+             ORDER BY m.created_at DESC",
+            [$admin_id, $admin_id]
         );
         
         // Mark memo as read when viewed
         if (isset($_GET['memo_id'])) {
             $memo_id = intval($_GET['memo_id']);
             $db->query(
-                "UPDATE memo_recipients SET read_at = CURRENT_TIMESTAMP WHERE memo_id = ? AND admin_id = ? AND read_at IS NULL",
+                "UPDATE memo_recipients SET read_at = CURRENT_TIMESTAMP WHERE memo_id = ? AND recipient_id = ? AND read_at IS NULL",
                 [$memo_id, $admin_id]
             );
         }

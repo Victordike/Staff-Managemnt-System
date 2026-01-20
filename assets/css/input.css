@@ -38,6 +38,34 @@
   .sidebar-link.active {
     @apply bg-blue-100 dark:bg-blue-900 dark:bg-opacity-40 text-blue-700 dark:text-blue-300 font-semibold;
   }
+  
+  .accordion-item {
+    @apply w-full;
+  }
+  
+  .accordion-toggle {
+    @apply w-full flex items-center justify-between;
+  }
+  
+  .accordion-toggle.active .accordion-icon {
+    @apply rotate-180;
+  }
+  
+  .accordion-content {
+    @apply max-h-0 overflow-hidden transition-all duration-300 ease-in-out;
+  }
+  
+  .accordion-content.open {
+    @apply max-h-screen;
+  }
+  
+  .accordion-link {
+    @apply flex items-center px-4 py-2 ml-4 text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900 dark:hover:bg-opacity-20 hover:text-blue-600 dark:hover:text-blue-400 transition duration-200 cursor-pointer rounded-lg text-sm sm:text-base border-l-2 border-transparent hover:border-blue-600 dark:hover:border-blue-400;
+  }
+  
+  .accordion-link.active {
+    @apply bg-blue-50 dark:bg-blue-900 dark:bg-opacity-30 text-blue-700 dark:text-blue-300 font-semibold border-l-2 border-blue-600 dark:border-blue-400;
+  }
 }
 
 /* Background Slideshow */
@@ -71,7 +99,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(30, 58, 138, 0.75);
+  background-color: rgba(17, 2, 58, 0.884);
   z-index: 0;
 }
 

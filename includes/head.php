@@ -10,10 +10,49 @@ $lastname = $_SESSION['lastname'] ?? '';
 $profilePicture = $_SESSION['profile_picture'] ?? null;
 $initials = getInitials($firstname, $lastname);
 
+// Initialize database connection
+$db = Database::getInstance();
+$admin_user_id = $_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? null;
+
+// Notification counters
+$unread_notifications_count = 0;
+$user_pending_documents_count = 0;
+$establishment_pending_count = 0;
+$registrar_pending_count = 0;
+
+try {
+    if ($admin_user_id) {
+        $unread_result = $db->fetchOne(
+            "SELECT COUNT(*) as count FROM document_notifications WHERE admin_id = ? AND is_read = 0",
+            [$admin_user_id]
+        );
+        $unread_notifications_count = $unread_result['count'] ?? 0;
+        
+        $user_pending_result = $db->fetchOne(
+            "SELECT COUNT(*) as count FROM document_submissions WHERE admin_id = ? AND approval_status IN ('pending', 'establishment_approved')",
+            [$admin_user_id]
+        );
+        $user_pending_documents_count = $user_pending_result['count'] ?? 0;
+        
+        $establishment_result = $db->fetchOne(
+            "SELECT COUNT(*) as count FROM document_submissions WHERE current_stage = 'establishment' AND approval_status = 'pending'",
+            []
+        );
+        $establishment_pending_count = $establishment_result['count'] ?? 0;
+        
+        $registrar_result = $db->fetchOne(
+            "SELECT COUNT(*) as count FROM document_submissions WHERE current_stage = 'registrar' AND approval_status = 'establishment_approved'",
+            []
+        );
+        $registrar_pending_count = $registrar_result['count'] ?? 0;
+    }
+} catch (Exception $e) {
+    // Silently fail
+}
+
 // Fetch profile picture from database for admin users
 if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
     try {
-        $db = Database::getInstance();
         $userProfile = $db->fetchOne(
             "SELECT profile_picture FROM admin_users WHERE staff_id = ?",
             [$_SESSION['staff_id']]
@@ -268,14 +307,16 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                             </a>
                         </div>
                     </div>
+                    
+                    <!-- Document Submissions Link -->
+                    <a href="view_document_submissions.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'view_document_submissions.php' ? 'active' : ''; ?>" data-tooltip="Document Submissions">
+                        <i class="fas fa-file-archive text-xl w-6"></i>
+                        <span class="sidebar-text ml-3">Document Submissions</span>
+                    </a>
                 <?php elseif ($userRole === 'admin'): ?>
                     <a href="admin_dashboard.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'admin_dashboard.php' ? 'active' : ''; ?>" data-tooltip="Dashboard">
                         <i class="fas fa-tachometer-alt text-xl w-6"></i>
                         <span class="sidebar-text ml-3">Dashboard</span>
-                    </a>
-                    <a href="my_records.php" class="sidebar-link <?php echo basename($_SERVER['PHP_SELF']) === 'my_records.php' ? 'active' : ''; ?>" data-tooltip="My Records">
-                        <i class="fas fa-file-alt text-xl w-6"></i>
-                        <span class="sidebar-text ml-3">My Records</span>
                     </a>
                     
                     <!-- Memo Management Accordion -->
@@ -294,6 +335,205 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                                 <i class="fas fa-history text-lg w-6"></i>
                                 <span class="sidebar-text ml-3">Memo History</span>
                             </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Document Management Accordion -->
+                    <div class="accordion-item">
+                        <button class="sidebar-link accordion-toggle" onclick="toggleAccordion(this)" data-tooltip="Documents">
+                            <i class="fas fa-file-archive text-xl w-6"></i>
+                            <span class="sidebar-text ml-3">Documents</span>
+                            <i class="fas fa-chevron-down text-xs ml-auto accordion-icon"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <a href="upload_documents.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'upload_documents.php' ? 'active' : ''; ?>" data-tooltip="Document Upload">
+                                <i class="fas fa-cloud-upload-alt text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Upload Document</span>
+                            </a>
+                            <a href="document_status.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'document_status.php' ? 'active' : ''; ?>" data-tooltip="Document Status">
+                                <i class="fas fa-bell text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Status & Notifications</span>
+                                <div class="ml-auto flex gap-1">
+                                    <?php if ($user_pending_documents_count > 0): ?>
+                                        <span class="bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full" title="Pending documents"><?php echo $user_pending_documents_count; ?></span>
+                                    <?php endif; ?>
+                                    <?php if ($unread_notifications_count > 0): ?>
+                                        <span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full" title="Unread notifications"><?php echo $unread_notifications_count; ?></span>
+                                    <?php endif; ?>
+                                </div>
+                            </a>
+                            <a href="document_history.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'document_history.php' ? 'active' : ''; ?>" data-tooltip="Document History">
+                                <i class="fas fa-history text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Document History</span>
+                            </a>
+                        </div>
+                    </div>
+                    <!-- Leave Management Accordion -->
+                    <div class="accordion-item">
+                        <button class="sidebar-link accordion-toggle" onclick="toggleAccordion(this)" data-tooltip="Leave Management">
+                            <i class="fas fa-calendar-alt text-xl w-6"></i>
+                            <span class="sidebar-text ml-3">Leave Management</span>
+                            <i class="fas fa-chevron-down text-xs ml-auto accordion-icon"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <a href="apply_leave.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'apply_leave.php' ? 'active' : ''; ?>" data-tooltip="Apply for Leave">
+                                <i class="fas fa-paper-plane text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Apply for Leave</span>
+                            </a>
+                            <a href="leave_history.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'leave_history.php' ? 'active' : ''; ?>" data-tooltip="Leave History">
+                                <i class="fas fa-history text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Leave History</span>
+                            </a>
+                            <a href="resumption_duty.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'resumption_duty.php' ? 'active' : ''; ?>" data-tooltip="Resumption of Duty">
+                                <i class="fas fa-walking text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Resumption of Duty</span>
+                            </a>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Leave Approvals Accordion -->
+                <?php
+                $hasLeaveApprovalRole = false;
+                if ($userRole === 'admin' || $userRole === 'superadmin') {
+                    $roles = $db->fetchAll("
+                        SELECT role_name FROM admin_roles 
+                        WHERE admin_id = ? AND removed_at IS NULL
+                    ", [$admin_user_id ?? null]);
+                    
+                    foreach ($roles as $role) {
+                        if (in_array($role['role_name'], ['HOD', 'Dean', 'Academic Dean', 'Establishment', 'Registrar', 'Rector'])) {
+                            $hasLeaveApprovalRole = true;
+                            break;
+                        }
+                    }
+                }
+                ?>
+                <?php if ($hasLeaveApprovalRole || $userRole === 'superadmin'): ?>
+                    <div class="accordion-item">
+                        <button class="sidebar-link accordion-toggle" onclick="toggleAccordion(this)" data-tooltip="Leave Approvals">
+                            <i class="fas fa-user-check text-xl w-6"></i>
+                            <span class="sidebar-text ml-3">Leave Approvals</span>
+                            <i class="fas fa-chevron-down text-xs ml-auto accordion-icon"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <?php
+                            $roles = $db->fetchAll("
+                                SELECT role_name FROM admin_roles 
+                                WHERE admin_id = ? AND removed_at IS NULL
+                            ", [$admin_user_id ?? null]);
+                            
+                            $hasHOD = false;
+                            $hasDean = false;
+                            $hasEst = false;
+                            $hasFinal = false;
+                            foreach ($roles as $role) {
+                                if ($role['role_name'] === 'HOD') $hasHOD = true;
+                                if (in_array($role['role_name'], ['Dean', 'Academic Dean'])) $hasDean = true;
+                                if ($role['role_name'] === 'Establishment') $hasEst = true;
+                                if (in_array($role['role_name'], ['Registrar', 'Rector'])) $hasFinal = true;
+                            }
+                            ?>
+                            <?php if ($hasHOD || $userRole === 'superadmin'): ?>
+                                <a href="hod_leave_approvals.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'hod_leave_approvals.php' ? 'active' : ''; ?>" data-tooltip="HOD Recommendations">
+                                    <i class="fas fa-user-tie text-lg w-6"></i>
+                                    <span class="sidebar-text ml-3">HOD Recommendations</span>
+                                </a>
+                            <?php endif; ?>
+                            <?php if ($hasDean || $userRole === 'superadmin'): ?>
+                                <a href="dean_leave_approvals.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'dean_leave_approvals.php' ? 'active' : ''; ?>" data-tooltip="Dean Clearances">
+                                    <i class="fas fa-user-graduate text-lg w-6"></i>
+                                    <span class="sidebar-text ml-3">Dean Clearances</span>
+                                </a>
+                            <?php endif; ?>
+                            <?php if ($hasEst || $userRole === 'superadmin'): ?>
+                                <a href="establishment_leave_approvals.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'establishment_leave_approvals.php' ? 'active' : ''; ?>" data-tooltip="Establishment Verifications">
+                                    <i class="fas fa-id-card text-lg w-6"></i>
+                                    <span class="sidebar-text ml-3">Est. Verifications</span>
+                                </a>
+                                <a href="manage_leave_balances.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_leave_balances.php' ? 'active' : ''; ?>" data-tooltip="Manage Leave Balances">
+                                    <i class="fas fa-coins text-lg w-6"></i>
+                                    <span class="sidebar-text ml-3">Manage Balances</span>
+                                </a>
+                                <a href="manage_holidays.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_holidays.php' ? 'active' : ''; ?>" data-tooltip="Manage Holidays">
+                                    <i class="fas fa-calendar-day text-lg w-6"></i>
+                                    <span class="sidebar-text ml-3">Manage Holidays</span>
+                                </a>
+                            <?php endif; ?>
+                            <?php if ($hasFinal || $userRole === 'superadmin'): ?>
+                                <a href="final_leave_approvals.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'final_leave_approvals.php' ? 'active' : ''; ?>" data-tooltip="Final Approvals">
+                                    <i class="fas fa-check-double text-lg w-6"></i>
+                                    <span class="sidebar-text ml-3">Final Approvals</span>
+                                </a>
+                            <?php endif; ?>
+                            <a href="leave_approval_history.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'leave_approval_history.php' ? 'active' : ''; ?>" data-tooltip="Approval History">
+                                <i class="fas fa-history text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Approval History</span>
+                            </a>
+                            <a href="leave_reports.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'leave_reports.php' ? 'active' : ''; ?>" data-tooltip="Leave Reports">
+                                <i class="fas fa-chart-pie text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Leave Reports</span>
+                            </a>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Document Approval Accordion -->
+                <?php
+                $hasApprovalRole = false;
+                if ($userRole === 'admin' || $userRole === 'superadmin') {
+                    $roles = $db->fetchAll("
+                        SELECT role_name FROM admin_roles 
+                        WHERE admin_id = ? AND removed_at IS NULL
+                    ", [$admin_user_id ?? null]);
+                    
+                    foreach ($roles as $role) {
+                        if (in_array($role['role_name'], ['Establishment', 'Registrar'])) {
+                            $hasApprovalRole = true;
+                            break;
+                        }
+                    }
+                }
+                ?>
+                <?php if ($hasApprovalRole || $userRole === 'superadmin'): ?>
+                    <div class="accordion-item">
+                        <button class="sidebar-link accordion-toggle" onclick="toggleAccordion(this)" data-tooltip="Document Approvals">
+                            <i class="fas fa-check-double text-xl w-6"></i>
+                            <span class="sidebar-text ml-3">Document Approvals</span>
+                            <i class="fas fa-chevron-down text-xs ml-auto accordion-icon"></i>
+                        </button>
+                        <div class="accordion-content">
+                            <?php
+                            $roles = $db->fetchAll("
+                                SELECT role_name FROM admin_roles 
+                                WHERE admin_id = ? AND removed_at IS NULL
+                            ", [$admin_user_id ?? null]);
+                            
+                            $hasEstablishment = false;
+                            $hasRegistrar = false;
+                            foreach ($roles as $role) {
+                                if ($role['role_name'] === 'Establishment') $hasEstablishment = true;
+                                if ($role['role_name'] === 'Registrar') $hasRegistrar = true;
+                            }
+                            ?>
+                            <?php if ($hasEstablishment || $userRole === 'superadmin'): ?>
+                                <a href="establishment_approve_documents.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'establishment_approve_documents.php' ? 'active' : ''; ?>" data-tooltip="Establishment Approvals">
+                                    <i class="fas fa-check-circle text-lg w-6"></i>
+                                    <span class="sidebar-text ml-3">Establishment Approvals</span>
+                                    <?php if ($establishment_pending_count > 0): ?>
+                                        <span class="ml-auto bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full"><?php echo $establishment_pending_count; ?></span>
+                                    <?php endif; ?>
+                                </a>
+                            <?php endif; ?>
+                            <?php if ($hasRegistrar || $userRole === 'superadmin'): ?>
+                                <a href="registrar_approve_documents.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'registrar_approve_documents.php' ? 'active' : ''; ?>" data-tooltip="Registrar Approvals">
+                                    <i class="fas fa-check-circle text-lg w-6"></i>
+                                    <span class="sidebar-text ml-3">Registrar Approvals</span>
+                                    <?php if ($registrar_pending_count > 0): ?>
+                                        <span class="ml-auto bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full"><?php echo $registrar_pending_count; ?></span>
+                                    <?php endif; ?>
+                                </a>
+                            <?php endif; ?>
                         </div>
                     </div>
                 <?php endif; ?>

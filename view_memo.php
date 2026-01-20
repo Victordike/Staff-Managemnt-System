@@ -18,27 +18,27 @@ try {
     if ($userRole === 'superadmin') {
         // Super admin can view their own sent memos
         $memo = $db->fetchOne(
-            "SELECT m.*, u.firstname, u.lastname FROM memos m 
-             JOIN users u ON m.sender_id = u.id 
-             WHERE m.id = ? AND m.sender_id = ?",
-            [$memo_id, $_SESSION['user_id']]
+            "SELECT m.*, au.firstname, au.surname as lastname FROM memos m 
+             JOIN admin_users au ON m.sender_id = au.id 
+             WHERE m.id = ?",
+            [$memo_id]
         );
     } else {
         // Admin can view memos sent to them
         $admin_id = $_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? null;
         if ($admin_id) {
             $memo = $db->fetchOne(
-                "SELECT m.*, u.firstname, u.lastname FROM memos m 
-                 JOIN users u ON m.sender_id = u.id 
+                "SELECT m.*, au.firstname, au.surname as lastname FROM memos m 
+                 JOIN admin_users au ON m.sender_id = au.id 
                  JOIN memo_recipients mr ON m.id = mr.memo_id 
-                 WHERE m.id = ? AND mr.admin_id = ?",
+                 WHERE m.id = ? AND mr.recipient_id = ?",
                 [$memo_id, $admin_id]
             );
             
             // Mark as read
             if ($memo) {
                 $db->query(
-                    "UPDATE memo_recipients SET read_at = CURRENT_TIMESTAMP WHERE memo_id = ? AND admin_id = ? AND read_at IS NULL",
+                    "UPDATE memo_recipients SET read_at = CURRENT_TIMESTAMP WHERE memo_id = ? AND recipient_id = ? AND read_at IS NULL",
                     [$memo_id, $admin_id]
                 );
             }

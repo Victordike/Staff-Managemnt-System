@@ -24,17 +24,27 @@ $db = Database::getInstance()->getConnection();
 try {
     $stmt = $db->prepare("
         UPDATE admin_users 
-        SET firstname = ?, surname = ?, staff_id = ?, official_email = ?, position = ?, department = ?
+        SET firstname = ?, surname = ?, othername = ?, staff_id = ?, official_email = ?, 
+            position = ?, department = ?, salary_structure = ?, gl = ?, step = ?, rank = ?,
+            phone_number = ?, state_origin = ?, lga_origin = ?
         WHERE id = ?
     ");
     
     $stmt->execute([
         $data['firstname'],
         $data['surname'],
+        $data['othername'] ?? '',
         $data['staff_id'],
         $data['official_email'],
         $data['position'],
         $data['department'],
+        $data['salary_structure'] ?? '',
+        $data['gl'] ?? '',
+        $data['step'] ?? '',
+        $data['rank'] ?? '',
+        $data['phone_number'] ?? '',
+        $data['state_origin'] ?? '',
+        $data['lga_origin'] ?? '',
         $data['id']
     ]);
     

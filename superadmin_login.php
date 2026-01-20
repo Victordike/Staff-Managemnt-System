@@ -24,10 +24,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['role'] = 'superadmin';
-                $_SESSION['firstname'] = $user['firstname'];
-                $_SESSION['lastname'] = $user['lastname'];
-                $_SESSION['fullname'] = $user['firstname'] . ' ' . $user['lastname'];
-                $_SESSION['profile_picture'] = $user['profile_picture'];
+                $_SESSION['firstname'] = $user['firstname'] ?? 'Super';
+                $_SESSION['lastname'] = $user['lastname'] ?? 'Admin';
+                $_SESSION['fullname'] = ($user['firstname'] ?? 'Super') . ' ' . ($user['lastname'] ?? 'Admin');
+                $_SESSION['profile_picture'] = $user['profile_picture'] ?? '';
                 
                 redirect('superadmin_dashboard.php');
             } else {

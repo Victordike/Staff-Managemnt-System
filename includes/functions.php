@@ -4,6 +4,11 @@ if (session_status() === PHP_SESSION_NONE) {
     @session_start();
 }
 
+// Common session variables
+$userRole = $_SESSION['role'] ?? '';
+$adminId = $_SESSION['admin_id'] ?? null;
+$userId = $_SESSION['user_id'] ?? null;
+
 // Extract text from Word document (.docx)
 function extractWordDocumentText($file_path) {
     if (!file_exists($file_path) || !extension_loaded('zip')) {
@@ -137,7 +142,9 @@ function isSuperAdmin() {
 }
 
 function isAdmin() {
-    return isLoggedIn() && $_SESSION['role'] === 'admin';
+    if (!isLoggedIn()) return false;
+    $role = $_SESSION['role'] ?? '';
+    return $role === 'admin' || $role === 'superadmin';
 }
 
 function requireLogin() {
@@ -188,7 +195,7 @@ function redirect($url) {
     exit;
 }
 
-function setFlashMessage($type, $message) {
+function setFlashMessage($message, $type = 'success') {
     $_SESSION['flash_type'] = $type;
     $_SESSION['flash_message'] = $message;
 }
@@ -256,5 +263,43 @@ function getInitials($firstname, $lastname) {
 
 function formatDate($date) {
     return date('F j, Y', strtotime($date));
+}
+
+/**
+ * Calculates leave duration excluding weekends and public holidays
+ * @param string $startDate Y-m-d
+ * @param string $endDate Y-m-d
+ * @param Database $db Database instance
+ * @return int Duration in days
+ */
+function calculateLeaveDuration($startDate, $endDate, $db) {
+    $start = new DateTime($startDate);
+    $end = new DateTime($endDate);
+    
+    if ($start > $end) return 0;
+    
+    // Fetch holidays for the relevant years
+    $years = [ (int)$start->format('Y') ];
+    if ($start->format('Y') !== $end->format('Y')) {
+        $years[] = (int)$end->format('Y');
+    }
+    
+    $placeholders = implode(',', array_fill(0, count($years), '?'));
+    $holidaysRaw = $db->fetchAll("SELECT holiday_date FROM holidays WHERE year IN ($placeholders)", $years);
+    $holidays = array_column($holidaysRaw, 'holiday_date');
+    
+    $duration = 0;
+    $period = new DatePeriod($start, new DateInterval('P1D'), (clone $end)->modify('+1 day'));
+    
+    foreach ($period as $date) {
+        $dateStr = $date->format('Y-m-d');
+        $dayOfWeek = $date->format('N'); // 1 (Mon) to 7 (Sun)
+        
+        if ($dayOfWeek < 6 && !in_array($dateStr, $holidays)) {
+            $duration++;
+        }
+    }
+    
+    return $duration;
 }
 ?>

@@ -36,7 +36,7 @@ try {
         SELECT 
             id, firstname, surname, othername, staff_id, official_email, position, 
             department, phone_number, date_of_birth, sex, marital_status, 
-            permanent_home_address, lga_origin, type_of_employment, date_of_assumption, 
+            permanent_home_address, state_origin, lga_origin, type_of_employment, date_of_assumption, 
             cadre, salary_structure, gl, step, rank, bank_name, account_name, 
             account_number, pfa_name, pfa_pin, nok_fullname, nok_phone_number, 
             nok_relationship, nok_address, is_active, created_at, updated_at
@@ -60,7 +60,7 @@ try {
     // Header row
     $headers = [
         'First Name', 'Surname', 'Other Name', 'Staff ID', 'Email', 'Position', 'Department',
-        'Phone Number', 'Date of Birth', 'Sex', 'Marital Status', 'Home Address', 'LGA Origin',
+        'Phone Number', 'Date of Birth', 'Sex', 'Marital Status', 'Home Address', 'State Origin', 'LGA Origin',
         'Employment Type', 'Date of Assumption', 'Cadre', 'Salary Structure', 'GL', 'STEP', 'Rank',
         'Bank Name', 'Account Name', 'Account Number', 'PFA Name', 'PFA PIN',
         'NOK Full Name', 'NOK Phone', 'NOK Relationship', 'NOK Address', 'Status', 'Created Date', 'Updated Date'
@@ -82,6 +82,7 @@ try {
             $user['sex'],
             $user['marital_status'],
             $user['permanent_home_address'],
+            $user['state_origin'],
             $user['lga_origin'],
             $user['type_of_employment'],
             $user['date_of_assumption'],

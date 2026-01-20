@@ -2,6 +2,9 @@
 require_once 'includes/session.php';
 
 $error = '';
+if (isset($_GET['error']) && $_GET['error'] === 'session_expired') {
+    $error = 'Your session has expired or the database was reset. Please verify your details again.';
+}
 $step = 1;
 
 // Handle pre-verification
@@ -30,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify'])) {
             } else {
                 // Verify against pre_users
                 $preUser = $db->fetchOne(
-                    "SELECT * FROM pre_users WHERE staff_id = ? AND LOWER(firstname) = LOWER(?) AND LOWER(surname) = LOWER(?) AND is_registered = FALSE",
+                    "SELECT * FROM pre_users WHERE TRIM(LOWER(staff_id)) = TRIM(LOWER(?)) AND TRIM(LOWER(firstname)) = TRIM(LOWER(?)) AND TRIM(LOWER(surname)) = TRIM(LOWER(?))",
                     [$staffId, $firstname, $lastname]
                 );
                 

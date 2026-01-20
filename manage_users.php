@@ -1,6 +1,7 @@
 <?php
 $pageTitle = 'Manage Users';
 require_once 'includes/head.php';
+require_once 'includes/nigeria_lga.php';
 
 // Check if user is superadmin or has specific admin roles
 $allowed_roles = ['Rector', 'Bursar', 'Registrar', 'Establishment Unit'];
@@ -115,7 +116,7 @@ if (!$is_authorized) {
         <form id="userForm" class="p-3 sm:p-6 space-y-4">
             <input type="hidden" id="userId" value="">
             
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">First Name *</label>
                     <input type="text" id="firstName" class="input-field" required>
@@ -124,11 +125,21 @@ if (!$is_authorized) {
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Last Name *</label>
                     <input type="text" id="lastName" class="input-field" required>
                 </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Other Name</label>
+                    <input type="text" id="otherName" class="input-field">
+                </div>
             </div>
             
-            <div>
-                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Staff ID *</label>
-                <input type="text" id="staffId" class="input-field" required>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Staff ID *</label>
+                    <input type="text" id="staffId" class="input-field" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Phone Number</label>
+                    <input type="text" id="phoneNumber" class="input-field">
+                </div>
             </div>
             
             <div>
@@ -146,7 +157,54 @@ if (!$is_authorized) {
                     <input type="text" id="department" class="input-field" required>
                 </div>
             </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Salary Structure</label>
+                    <select id="salaryStructure" class="input-field">
+                        <option value="">Select Structure</option>
+                        <option value="CONPCASS">CONPCASS (Academic)</option>
+                        <option value="CONTEDISS">CONTEDISS (Non-Academic)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Rank</label>
+                    <input type="text" id="rank" class="input-field">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Grade Level (GL)</label>
+                    <input type="text" id="gl" class="input-field">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Step</label>
+                    <input type="text" id="step" class="input-field">
+                </div>
+            </div>
             
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">State of Origin</label>
+                    <select id="state" class="input-field" onchange="updateLGAs()">
+                        <option value="">Select State</option>
+                        <?php 
+                        $statesLgas = getNigerianStatesWithLGAs();
+                        foreach (array_keys($statesLgas) as $state): 
+                        ?>
+                            <option value="<?php echo htmlspecialchars($state); ?>"><?php echo htmlspecialchars($state); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">LGA of Origin</label>
+                    <select id="lga" class="input-field">
+                        <option value="">Select LGA</option>
+                    </select>
+                </div>
+            </div>
+
             <div id="passwordField" class="hidden">
                 <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Password *</label>
                 <input type="password" id="password" class="input-field">
@@ -181,6 +239,25 @@ if (!$is_authorized) {
 <script>
 let usersData = [];
 let filteredData = [];
+const nigeriaStatesLGAs = <?php echo json_encode(getNigerianStatesWithLGAs()); ?>;
+
+function updateLGAs() {
+    const stateSelect = document.getElementById('state');
+    const lgaSelect = document.getElementById('lga');
+    const selectedState = stateSelect.value;
+    
+    // Clear current LGAs
+    lgaSelect.innerHTML = '<option value="">Select LGA</option>';
+    
+    if (selectedState && nigeriaStatesLGAs[selectedState]) {
+        nigeriaStatesLGAs[selectedState].forEach(lga => {
+            const option = document.createElement('option');
+            option.value = lga;
+            option.textContent = lga;
+            lgaSelect.appendChild(option);
+        });
+    }
+}
 
 // Load users on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -265,6 +342,17 @@ function openAddUserModal() {
     document.getElementById('modalTitle').textContent = 'Add New User';
     document.getElementById('passwordField').classList.remove('hidden');
     document.getElementById('userForm').reset();
+    
+    // Explicitly clear additional fields
+    document.getElementById('otherName').value = '';
+    document.getElementById('phoneNumber').value = '';
+    document.getElementById('salaryStructure').value = '';
+    document.getElementById('gl').value = '';
+    document.getElementById('step').value = '';
+    document.getElementById('rank').value = '';
+    document.getElementById('state').value = '';
+    document.getElementById('lga').innerHTML = '<option value="">Select LGA</option>';
+    
     document.getElementById('userModal').classList.remove('hidden');
 }
 
@@ -291,14 +379,27 @@ function viewUser(userId) {
             </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
-            <div><strong class="text-gray-700 dark:text-gray-200">First Name:</strong><p class="text-gray-600 dark:text-gray-400">${user.firstname}</p></div>
-            <div><strong class="text-gray-700 dark:text-gray-200">Last Name:</strong><p class="text-gray-600 dark:text-gray-400">${user.surname}</p></div>
+            <div><strong class="text-gray-700 dark:text-gray-200">Full Name:</strong><p class="text-gray-600 dark:text-gray-400">${user.firstname} ${user.othername ? user.othername + ' ' : ''}${user.surname}</p></div>
             <div><strong class="text-gray-700 dark:text-gray-200">Staff ID:</strong><p class="text-gray-600 dark:text-gray-400">${user.staff_id}</p></div>
             <div><strong class="text-gray-700 dark:text-gray-200">Email:</strong><p class="text-gray-600 dark:text-gray-400">${user.official_email}</p></div>
             <div><strong class="text-gray-700 dark:text-gray-200">Position:</strong><p class="text-gray-600 dark:text-gray-400">${user.position}</p></div>
             <div><strong class="text-gray-700 dark:text-gray-200">Department:</strong><p class="text-gray-600 dark:text-gray-400">${user.department}</p></div>
             <div><strong class="text-gray-700 dark:text-gray-200">Phone:</strong><p class="text-gray-600 dark:text-gray-400">${user.phone_number}</p></div>
-            <div><strong class="text-gray-700 dark:text-gray-200">Status:</strong><p class="text-gray-600 dark:text-gray-400">${user.is_active ? 'Active' : 'Inactive'}</p></div>
+            <div><strong class="text-gray-700 dark:text-gray-200">State of Origin:</strong><p class="text-gray-600 dark:text-gray-400">${user.state_origin || 'N/A'}</p></div>
+            <div><strong class="text-gray-700 dark:text-gray-200">LGA of Origin:</strong><p class="text-gray-600 dark:text-gray-400">${user.lga_origin || 'N/A'}</p></div>
+            
+            <div class="col-span-2 border-t border-gray-100 dark:border-gray-700 mt-2 pt-2 font-bold text-blue-600 dark:text-blue-400">Hierarchy Details</div>
+            <div><strong class="text-gray-700 dark:text-gray-200">Salary Structure:</strong><p class="text-gray-600 dark:text-gray-400">${user.salary_structure || 'N/A'}</p></div>
+            <div><strong class="text-gray-700 dark:text-gray-200">Grade Level:</strong><p class="text-gray-600 dark:text-gray-400">${user.gl || 'N/A'}</p></div>
+            <div><strong class="text-gray-700 dark:text-gray-200">Step:</strong><p class="text-gray-600 dark:text-gray-400">${user.step || 'N/A'}</p></div>
+            <div><strong class="text-gray-700 dark:text-gray-200">Rank:</strong><p class="text-gray-600 dark:text-gray-400">${user.rank || 'N/A'}</p></div>
+            
+            <div class="col-span-2 border-t border-gray-100 dark:border-gray-700 mt-2 pt-2">
+                <strong class="text-gray-700 dark:text-gray-200">Status:</strong>
+                <span class="inline-block px-2 py-1 rounded-full text-xs font-semibold ${user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} ml-2">
+                    ${user.is_active ? 'Active' : 'Inactive'}
+                </span>
+            </div>
         </div>
         <div class="mt-6 flex gap-3">
             <button onclick="editUser(${user.id}); closeViewModal();" class="btn-primary flex-1">
@@ -318,10 +419,23 @@ function editUser(userId) {
     document.getElementById('userId').value = userId;
     document.getElementById('firstName').value = user.firstname;
     document.getElementById('lastName').value = user.surname;
+    document.getElementById('otherName').value = user.othername || '';
     document.getElementById('staffId').value = user.staff_id;
+    document.getElementById('phoneNumber').value = user.phone_number || '';
     document.getElementById('email').value = user.official_email;
     document.getElementById('position').value = user.position;
     document.getElementById('department').value = user.department;
+    document.getElementById('salaryStructure').value = user.salary_structure || '';
+    document.getElementById('gl').value = user.gl || '';
+    document.getElementById('step').value = user.step || '';
+    document.getElementById('rank').value = user.rank || '';
+    
+    // Set State and LGA
+    const stateSelect = document.getElementById('state');
+    stateSelect.value = user.state_origin || '';
+    updateLGAs();
+    document.getElementById('lga').value = user.lga_origin || '';
+    
     document.getElementById('modalTitle').textContent = 'Edit User';
     document.getElementById('passwordField').classList.add('hidden');
     document.getElementById('userModal').classList.remove('hidden');
@@ -332,10 +446,18 @@ function saveUser() {
     const userData = {
         firstname: document.getElementById('firstName').value,
         surname: document.getElementById('lastName').value,
+        othername: document.getElementById('otherName').value,
         staff_id: document.getElementById('staffId').value,
+        phone_number: document.getElementById('phoneNumber').value,
         official_email: document.getElementById('email').value,
         position: document.getElementById('position').value,
         department: document.getElementById('department').value,
+        salary_structure: document.getElementById('salaryStructure').value,
+        gl: document.getElementById('gl').value,
+        step: document.getElementById('step').value,
+        rank: document.getElementById('rank').value,
+        state_origin: document.getElementById('state').value,
+        lga_origin: document.getElementById('lga').value,
         password: document.getElementById('password').value
     };
     
@@ -387,7 +509,7 @@ function deleteUser(userId) {
 }
 
 function filterTable() {
-    const search = document.getElementById('searchInput').value.toLowerCase();
+    const search = document.getElementById('searchInput').value.toLowerCase().trim();
     filteredData = usersData.filter(user => 
         user.firstname.toLowerCase().includes(search) ||
         user.surname.toLowerCase().includes(search) ||

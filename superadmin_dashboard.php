@@ -10,7 +10,7 @@ try {
     
     // Get statistics
     $totalPreUsers = $db->fetchOne("SELECT COUNT(*) as count FROM pre_users")['count'];
-    $registeredUsers = $db->fetchOne("SELECT COUNT(*) as count FROM pre_users WHERE is_registered = TRUE")['count'];
+    $registeredUsers = $db->fetchOne("SELECT COUNT(*) as count FROM pre_users WHERE verified = 1")['count'];
     $pendingUsers = $totalPreUsers - $registeredUsers;
     $totalAdmins = $db->fetchOne("SELECT COUNT(*) as count FROM admin_users WHERE is_active = TRUE")['count'];
     
@@ -34,7 +34,7 @@ try {
     <div class="flex flex-col md:flex-row items-center justify-between">
         <div>
             <h1 class="text-3xl md:text-4xl font-bold mb-2">Welcome Back, <?php echo htmlspecialchars($_SESSION['firstname']); ?></h1>
-            <p class="text-indigo-100 text-lg">Federal Polytechnic of Oil and Gas - Staff Management System</p>
+            <p class="text-indigo-100 text-lg">Federal Polytechnic of Oil and Gas, Bonny Island, Rivers State, Nigeria</p>
             <p class="text-indigo-200 text-sm mt-2"><i class="fas fa-calendar mr-2"></i><?php echo date('l, F j, Y'); ?></p>
         </div>
         <div class="mt-6 md:mt-0 text-6xl opacity-20"><i class="fas fa-graduation-cap"></i></div>
@@ -146,7 +146,7 @@ try {
         <div class="space-y-2 text-sm text-gray-700">
             <div>
                 <p class="font-semibold text-gray-800">Federal Polytechnic of Oil and Gas</p>
-                <p class="text-gray-600">Effurun, Delta State, Nigeria</p>
+                <p class="text-gray-600">Bonny Island, Rivers State, Nigeria</p>
             </div>
             <div class="pt-2 border-t">
                 <p class="text-xs text-gray-500">Total Users: <span class="font-bold text-gray-800"><?php echo $totalPreUsers; ?></span></p>

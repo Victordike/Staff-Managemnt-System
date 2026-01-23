@@ -10,6 +10,9 @@ try {
     $staffId = $_SESSION['staff_id'];
     $adminId = $_SESSION['admin_id'];
     
+    // Real-time check to complete any ended leave
+    checkAndCompleteLeave($adminId);
+    
     $userRoles = $db->fetchAll(
         "SELECT role_name FROM admin_roles WHERE admin_id = ? AND removed_at IS NULL",
         [$adminId]
@@ -46,6 +49,13 @@ try {
         "SELECT COUNT(*) as count FROM document_notifications WHERE admin_id = ? AND is_read = 0",
         [$adminId]
     );
+
+    $unreadLeaveNotifications = $db->fetchOne(
+        "SELECT COUNT(*) as count FROM leave_notifications WHERE admin_id = ? AND is_read = 0",
+        [$adminId]
+    );
+    
+    $totalUnreadCount = ($unreadNotifications['count'] ?? 0) + ($unreadLeaveNotifications['count'] ?? 0);
     
     $recentDocuments = $db->fetchAll(
         "SELECT ds.*, au.firstname, au.surname 
@@ -72,15 +82,28 @@ try {
          ORDER BY dn.created_at DESC LIMIT 5",
         [$adminId]
     );
+
+    $recentLeaveNotifs = $db->fetchAll(
+        "SELECT ln.*, lt.name as leave_type 
+         FROM leave_notifications ln
+         JOIN leave_applications la ON ln.leave_id = la.id
+         JOIN leave_types lt ON la.leave_type_id = lt.id
+         WHERE ln.admin_id = ? AND ln.is_read = 0
+         ORDER BY ln.created_at DESC LIMIT 5",
+        [$adminId]
+    );
     
 } catch (Exception $e) {
     error_log($e->getMessage());
     $profile = null;
     $documentsData = [];
     $unreadNotifications = ['count' => 0];
+    $unreadLeaveNotifications = ['count' => 0];
+    $totalUnreadCount = 0;
     $recentDocuments = [];
     $recentApprovals = [];
     $recentUnreadNotifs = [];
+    $recentLeaveNotifs = [];
     $hasEstablishmentRole = false;
     $hasRegistrarRole = false;
 }
@@ -175,7 +198,7 @@ try {
             </div>
             <div class="flex items-center justify-between p-2 bg-indigo-50 rounded">
                 <span class="text-gray-700 font-semibold">Unread Notifications</span>
-                <span class="inline-block bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold"><?php echo $unreadNotifications['count'] ?? 0; ?></span>
+                <span class="inline-block bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold"><?php echo $totalUnreadCount; ?></span>
             </div>
         </div>
     </div>
@@ -198,6 +221,12 @@ try {
             <?php endif; ?>
             <a href="document_history.php" class="block w-full bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 px-3 rounded-lg transition text-center text-sm font-semibold">
                 <i class="fas fa-history mr-2"></i>View History
+            </a>
+            <a href="upload_memo.php" class="block w-full bg-purple-100 hover:bg-purple-200 text-purple-800 py-2 px-3 rounded-lg transition text-center text-sm font-semibold">
+                <i class="fas fa-paper-plane mr-2"></i>Send Memo
+            </a>
+            <a href="view_received_memos.php" class="block w-full bg-indigo-100 hover:bg-indigo-200 text-indigo-800 py-2 px-3 rounded-lg transition text-center text-sm font-semibold">
+                <i class="fas fa-inbox mr-2"></i>View Received Memos
             </a>
         </div>
     </div>
@@ -226,43 +255,82 @@ try {
 
 <!-- Recent Activity & Unread Notifications -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <!-- Unread Notifications -->
-    <div class="card">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">
-            <i class="fas fa-bell mr-2 text-red-600"></i>Unread Notifications
-            <?php if ($unreadNotifications['count'] > 0): ?>
-                <span class="inline-block bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold ml-2"><?php echo $unreadNotifications['count']; ?></span>
-            <?php endif; ?>
-        </h2>
-        
-        <?php if (empty($recentUnreadNotifs)): ?>
-            <p class="text-gray-500 text-center py-6">No unread notifications</p>
-        <?php else: ?>
-            <div class="space-y-2">
-                <?php foreach ($recentUnreadNotifs as $notif): ?>
-                    <div class="p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <p class="font-semibold text-gray-800 text-sm"><?php echo htmlspecialchars($notif['original_filename'] ?? 'Document'); ?></p>
-                                <p class="text-gray-600 text-xs mt-1"><?php echo htmlspecialchars($notif['message']); ?></p>
-                                <p class="text-gray-500 text-xs mt-2"><?php echo formatDate($notif['created_at']); ?></p>
+    <div class="space-y-6">
+        <!-- Unread Document Notifications -->
+        <div class="card">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-file-alt mr-2 text-blue-600"></i>Document Notifications
+                <?php if ($unreadNotifications['count'] > 0): ?>
+                    <span class="inline-block bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold ml-2"><?php echo $unreadNotifications['count']; ?></span>
+                <?php endif; ?>
+            </h2>
+            
+            <?php if (empty($recentUnreadNotifs)): ?>
+                <p class="text-gray-500 text-center py-6">No unread notifications</p>
+            <?php else: ?>
+                <div class="space-y-2">
+                    <?php foreach ($recentUnreadNotifs as $notif): ?>
+                        <div class="p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <p class="font-semibold text-gray-800 text-sm"><?php echo htmlspecialchars($notif['original_filename'] ?? 'Document'); ?></p>
+                                    <p class="text-gray-600 text-xs mt-1"><?php echo htmlspecialchars($notif['message']); ?></p>
+                                    <p class="text-gray-500 text-xs mt-2"><?php echo formatDate($notif['created_at']); ?></p>
+                                </div>
+                                <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold">
+                                    <?php 
+                                        $typeMap = [
+                                            'submitted' => 'Submitted',
+                                            'establishment_approved' => 'Est. Approved',
+                                            'registrar_approved' => 'Registrar Approved',
+                                            'rejected' => 'Rejected'
+                                        ];
+                                        echo $typeMap[$notif['notification_type']] ?? ucfirst(str_replace('_', ' ', $notif['notification_type']));
+                                    ?>
+                                </span>
                             </div>
-                            <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-semibold">
-                                <?php 
-                                    $typeMap = [
-                                        'submitted' => 'Submitted',
-                                        'establishment_approved' => 'Est. Approved',
-                                        'registrar_approved' => 'Registrar Approved',
-                                        'rejected' => 'Rejected'
-                                    ];
-                                    echo $typeMap[$notif['notification_type']] ?? ucfirst(str_replace('_', ' ', $notif['notification_type']));
-                                ?>
-                            </span>
                         </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Unread Leave Notifications -->
+        <div class="card">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 flex justify-between items-center">
+                <span><i class="fas fa-calendar-check mr-2 text-green-600"></i>Leave Notifications</span>
+                <?php if ($unreadLeaveNotifications['count'] > 0): ?>
+                    <div class="flex items-center">
+                        <span class="inline-block bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold ml-2"><?php echo $unreadLeaveNotifications['count']; ?></span>
+                        <button onclick="markAllLeaveRead()" class="ml-3 text-[10px] text-gray-400 hover:text-green-600 transition uppercase font-black tracking-widest">Mark all read</button>
                     </div>
-                <?php endforeach; ?>
+                <?php endif; ?>
+            </h2>
+            
+            <?php if (empty($recentLeaveNotifs)): ?>
+                <p class="text-gray-500 text-center py-6">No unread leave notifications</p>
+            <?php else: ?>
+                <div class="space-y-2">
+                    <?php foreach ($recentLeaveNotifs as $notif): ?>
+                        <div class="p-3 bg-green-50 border-l-4 border-green-500 rounded">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <p class="font-semibold text-gray-800 text-sm"><?php echo htmlspecialchars($notif['leave_type']); ?></p>
+                                    <p class="text-gray-600 text-xs mt-1"><?php echo htmlspecialchars($notif['message']); ?></p>
+                                    <p class="text-gray-500 text-xs mt-2"><?php echo formatDate($notif['created_at']); ?></p>
+                                </div>
+                                <span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold">
+                                    <?php echo ucfirst($notif['notification_type']); ?>
+                                </span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+            <div class="mt-4 pt-4 border-t border-gray-100">
+                <a href="leave_history.php" class="text-sm font-bold text-green-600 hover:text-green-700">View Leave History →</a>
             </div>
-        <?php endif; ?>
+        </div>
     </div>
     
     <!-- Recent Approvals/Rejections -->
@@ -390,5 +458,23 @@ try {
         <span class="ticker-item"><i class="fas fa-bell mr-2 text-red-500"></i><?php echo $unreadNotifications['count']; ?> unread notifications</span>
     </div>
 </div>
+
+<script>
+function markAllLeaveRead() {
+    fetch('api/mark_leave_notification_read.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ notification_id: 'all' })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+</script>
 
 <?php require_once 'includes/foot.php'; ?>

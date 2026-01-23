@@ -7,9 +7,18 @@ $db = Database::getInstance();
 $adminId = $_SESSION['admin_id'];
 $currentYear = date('Y');
 
+// Real-time check to complete any ended leave before checking for active ones
+checkAndCompleteLeave($adminId);
+
 // Fetch user info including gender
 $userInfo = $db->fetchOne("SELECT sex FROM admin_users WHERE id = ?", [$adminId]);
 $userGender = $userInfo['sex'] ?? 'Any';
+
+// Check for active leave application (pending or approved but not yet completed)
+$activeLeave = $db->fetchOne("
+    SELECT * FROM leave_applications 
+    WHERE admin_id = ? AND status NOT IN ('rejected', 'completed', 'hod_rejected', 'dean_rejected', 'establishment_rejected')
+", [$adminId]);
 
 // Fetch user balances for the current year
 $userBalancesRaw = $db->fetchAll("
@@ -29,6 +38,11 @@ $userBalances = array_filter($userBalancesRaw, function($bal) use ($userGender) 
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($activeLeave) {
+        setFlashMessage('You cannot apply for a new leave while you have an active application.', 'error');
+        header('Location: leave_history.php');
+        exit;
+    }
     $leaveTypeId = $_POST['leave_type_id'];
     $startDate = $_POST['start_date'];
     $endDate = $_POST['end_date'];
@@ -128,7 +142,29 @@ $holidayDates = array_column($holidaysForJS, 'holiday_date');
             <p class="text-blue-100 mt-1">Please fill in the details below to request for leave.</p>
         </div>
         
-        <form method="POST" class="p-8 space-y-6">
+        <?php if ($activeLeave): ?>
+            <div class="p-8">
+                <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-red-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-red-700">
+                                You have an active leave application (<strong><?php echo str_replace('_', ' ', $activeLeave['status']); ?></strong>). 
+                                You cannot apply for a new leave until your current leave is completed or rejected.
+                            </p>
+                            <div class="mt-4">
+                                <a href="leave_history.php" class="text-sm font-bold text-red-700 hover:text-red-600 underline">
+                                    View Leave History <i class="fas fa-arrow-right ml-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php else: ?>
+            <form method="POST" class="p-8 space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Leave Type -->
                 <div class="space-y-2">
@@ -185,6 +221,7 @@ $holidayDates = array_column($holidaysForJS, 'holiday_date');
                 </button>
             </div>
         </form>
+        <?php endif; ?>
     </div>
 </div>
 

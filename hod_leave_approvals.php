@@ -10,9 +10,15 @@ $db = Database::getInstance();
 
 // Check if user is HOD or Superadmin
 $isHOD = false;
-$roles = $db->fetchAll("SELECT role_name FROM admin_roles WHERE admin_id = ? AND removed_at IS NULL", [$adminId]);
+$hodDepartments = [];
+$roles = $db->fetchAll("SELECT role_name, department FROM admin_roles WHERE admin_id = ? AND removed_at IS NULL", [$adminId]);
 foreach ($roles as $role) {
-    if ($role['role_name'] === 'HOD') $isHOD = true;
+    if ($role['role_name'] === 'HOD') {
+        $isHOD = true;
+        if ($role['department']) {
+            $hodDepartments[] = $role['department'];
+        }
+    }
 }
 
 if (!$isHOD && $userRole !== 'superadmin') {
@@ -39,14 +45,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 
 // Fetch pending applications for HOD
-// In a real system, we might filter by department.
+$whereClause = "la.status = 'pending'";
+$params = [];
+
+if ($userRole !== 'superadmin') {
+    if (!empty($hodDepartments)) {
+        $whereClause .= " AND au.department IN (" . implode(',', array_fill(0, count($hodDepartments), '?')) . ")";
+        $params = $hodDepartments;
+    } else {
+        $whereClause .= " AND 1=0"; // Show nothing if HOD has no department assigned
+    }
+}
+
 $pendingApps = $db->fetchAll(
     "SELECT la.*, lt.name as leave_type, au.firstname, au.surname, au.department 
      FROM leave_applications la 
      JOIN leave_types lt ON la.leave_type_id = lt.id 
      JOIN admin_users au ON la.admin_id = au.id 
-     WHERE la.status = 'pending' 
-     ORDER BY la.created_at ASC"
+     WHERE $whereClause 
+     ORDER BY la.created_at ASC",
+    $params
 );
 ?>
 

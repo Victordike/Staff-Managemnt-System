@@ -18,6 +18,7 @@ try {
         name VARCHAR(100) NOT NULL,
         description TEXT,
         default_days INT NOT NULL,
+        gender ENUM('Any', 'Male', 'Female') DEFAULT 'Any',
         is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
@@ -92,17 +93,17 @@ try {
     // Insert Default Leave Types
     echo "Inserting default leave types... ";
     $leave_types = [
-        ['Annual Leave', 'Standard yearly leave entitlement', 30],
-        ['Sick Leave', 'Leave for medical reasons', 15],
-        ['Casual Leave', 'Short-term leave for personal reasons', 7],
-        ['Maternity Leave', 'Leave for childbirth and childcare', 120],
-        ['Paternity Leave', 'Leave for male staff for childbirth and childcare', 15],
-        ['Study Leave', 'Leave for educational purposes', 0],
-        ['Examination Leave', 'Leave for taking examinations', 0],
-        ['Compassionate Leave', 'Leave for family emergencies or bereavement', 5]
+        ['Annual Leave', 'Standard yearly leave entitlement', 30, 'Any'],
+        ['Sick Leave', 'Leave for medical reasons', 15, 'Any'],
+        ['Casual Leave', 'Short-term leave for personal reasons', 7, 'Any'],
+        ['Maternity Leave', 'Leave for childbirth and childcare', 120, 'Female'],
+        ['Paternity Leave', 'Leave for male staff for childbirth and childcare', 15, 'Male'],
+        ['Study Leave', 'Leave for educational purposes', 0, 'Any'],
+        ['Examination Leave', 'Leave for taking examinations', 0, 'Any'],
+        ['Compassionate Leave', 'Leave for family emergencies or bereavement', 5, 'Any']
     ];
 
-    $stmt = $pdo->prepare("INSERT INTO leave_types (name, description, default_days) VALUES (?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO leave_types (name, description, default_days, gender) VALUES (?, ?, ?, ?)");
     foreach ($leave_types as $type) {
         $stmt->execute($type);
     }

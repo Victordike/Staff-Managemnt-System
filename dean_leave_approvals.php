@@ -10,9 +10,15 @@ $db = Database::getInstance();
 
 // Check if user is Dean or Superadmin
 $isDean = false;
-$roles = $db->fetchAll("SELECT role_name FROM admin_roles WHERE admin_id = ? AND removed_at IS NULL", [$adminId]);
+$deanFaculties = [];
+$roles = $db->fetchAll("SELECT role_name, faculty FROM admin_roles WHERE admin_id = ? AND removed_at IS NULL", [$adminId]);
 foreach ($roles as $role) {
-    if (in_array($role['role_name'], ['Dean', 'Academic Dean'])) $isDean = true;
+    if (in_array($role['role_name'], ['Dean', 'Academic Dean'])) {
+        $isDean = true;
+        if ($role['faculty']) {
+            $deanFaculties[] = $role['faculty'];
+        }
+    }
 }
 
 if (!$isDean && $userRole !== 'superadmin') {
@@ -39,15 +45,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 
 // Fetch applications recommended by HOD
+$whereClause = "la.status = 'hod_recommended'";
+$params = [];
+
+if ($userRole !== 'superadmin') {
+    if (!empty($deanFaculties)) {
+        $whereClause .= " AND au.faculty IN (" . implode(',', array_fill(0, count($deanFaculties), '?')) . ")";
+        $params = $deanFaculties;
+    } else {
+        $whereClause .= " AND 1=0";
+    }
+}
+
 $pendingApps = $db->fetchAll(
-    "SELECT la.*, lt.name as leave_type, au.firstname, au.surname, au.department,
+    "SELECT la.*, lt.name as leave_type, au.firstname, au.surname, au.department, au.faculty,
             h.firstname as hod_fname, h.surname as hod_sname, la.hod_remarks 
      FROM leave_applications la 
      JOIN leave_types lt ON la.leave_type_id = lt.id 
      JOIN admin_users au ON la.admin_id = au.id 
      LEFT JOIN admin_users h ON la.hod_id = h.id
-     WHERE la.status = 'hod_recommended' 
-     ORDER BY la.hod_recommended_at ASC"
+     WHERE $whereClause 
+     ORDER BY la.hod_recommended_at ASC",
+    $params
 );
 ?>
 

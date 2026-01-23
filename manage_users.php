@@ -3,6 +3,14 @@ $pageTitle = 'Manage Users';
 require_once 'includes/head.php';
 require_once 'includes/nigeria_lga.php';
 
+// Faculty/School options with departments
+$faculties = [
+    'School of Applied Sciences' => ['Computer Science', 'Library and Information Science', 'Science Laboratory Technology', 'Statistics'],
+    'School of Business Studies' => ['Accountancy', 'Business Administration and Management', 'Maritime Transport and Business Studies', 'Petroleum Marketing and Business Studies', 'Public Administration'],
+    'School of Engineering Technology' => ['Chemical Engineering Technology', 'Electrical Electronics Engineering Technology', 'Industrial Safety and Environmental Engineering Technology', 'Mechanical Engineering Technology', 'Welding and Fabrication Technology', 'Mineral and Petroleum Resource Engineering Technology'],
+    'Administrative and Support Services' => ['Rectorate', 'Registry', 'Bursary', 'Internal Audit', 'Physical Planning', 'Works and Services', 'Security Unit', 'Medical Center', 'Library (Admin)', 'Student Affairs', 'Academic Planning', 'Information and Communication Technology (ICT)']
+];
+
 // Check if user is superadmin or has specific admin roles
 $allowed_roles = ['Rector', 'Bursar', 'Registrar', 'Establishment Unit'];
 $is_authorized = $userRole === 'superadmin';
@@ -149,16 +157,27 @@ if (!$is_authorized) {
             
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Position *</label>
-                    <input type="text" id="position" class="input-field" required>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Faculty/School *</label>
+                    <select id="faculty" class="input-field" required onchange="updateDepartments()">
+                        <option value="">Select Faculty</option>
+                        <?php foreach (array_keys($faculties) as $faculty): ?>
+                            <option value="<?php echo htmlspecialchars($faculty); ?>"><?php echo htmlspecialchars($faculty); ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Department *</label>
-                    <input type="text" id="department" class="input-field" required>
+                    <select id="department" class="input-field" required>
+                        <option value="">Select Department</option>
+                    </select>
                 </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Position *</label>
+                    <input type="text" id="position" class="input-field" required>
+                </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Salary Structure</label>
                     <select id="salaryStructure" class="input-field">
@@ -167,15 +186,15 @@ if (!$is_authorized) {
                         <option value="CONTEDISS">CONTEDISS (Non-Academic)</option>
                     </select>
                 </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Rank</label>
                     <input type="text" id="rank" class="input-field">
                 </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Grade Level (GL)</label>
+                    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">GL</label>
                     <input type="text" id="gl" class="input-field">
                 </div>
                 <div>
@@ -240,6 +259,7 @@ if (!$is_authorized) {
 let usersData = [];
 let filteredData = [];
 const nigeriaStatesLGAs = <?php echo json_encode(getNigerianStatesWithLGAs()); ?>;
+const facultiesData = <?php echo json_encode($faculties); ?>;
 
 function updateLGAs() {
     const stateSelect = document.getElementById('state');
@@ -255,6 +275,24 @@ function updateLGAs() {
             option.value = lga;
             option.textContent = lga;
             lgaSelect.appendChild(option);
+        });
+    }
+}
+
+function updateDepartments() {
+    const facultySelect = document.getElementById('faculty');
+    const departmentSelect = document.getElementById('department');
+    const selectedFaculty = facultySelect.value;
+
+    // Clear current options except first
+    departmentSelect.innerHTML = '<option value="">Select Department</option>';
+
+    if (selectedFaculty && facultiesData[selectedFaculty]) {
+        facultiesData[selectedFaculty].forEach(dept => {
+            const option = document.createElement('option');
+            option.value = dept;
+            option.textContent = dept;
+            departmentSelect.appendChild(option);
         });
     }
 }
@@ -346,6 +384,8 @@ function openAddUserModal() {
     // Explicitly clear additional fields
     document.getElementById('otherName').value = '';
     document.getElementById('phoneNumber').value = '';
+    document.getElementById('faculty').value = '';
+    document.getElementById('department').innerHTML = '<option value="">Select Department</option>';
     document.getElementById('salaryStructure').value = '';
     document.getElementById('gl').value = '';
     document.getElementById('step').value = '';
@@ -382,8 +422,9 @@ function viewUser(userId) {
             <div><strong class="text-gray-700 dark:text-gray-200">Full Name:</strong><p class="text-gray-600 dark:text-gray-400">${user.firstname} ${user.othername ? user.othername + ' ' : ''}${user.surname}</p></div>
             <div><strong class="text-gray-700 dark:text-gray-200">Staff ID:</strong><p class="text-gray-600 dark:text-gray-400">${user.staff_id}</p></div>
             <div><strong class="text-gray-700 dark:text-gray-200">Email:</strong><p class="text-gray-600 dark:text-gray-400">${user.official_email}</p></div>
-            <div><strong class="text-gray-700 dark:text-gray-200">Position:</strong><p class="text-gray-600 dark:text-gray-400">${user.position}</p></div>
+            <div><strong class="text-gray-700 dark:text-gray-200">Faculty/School:</strong><p class="text-gray-600 dark:text-gray-400">${user.faculty || 'N/A'}</p></div>
             <div><strong class="text-gray-700 dark:text-gray-200">Department:</strong><p class="text-gray-600 dark:text-gray-400">${user.department}</p></div>
+            <div><strong class="text-gray-700 dark:text-gray-200">Position:</strong><p class="text-gray-600 dark:text-gray-400">${user.position}</p></div>
             <div><strong class="text-gray-700 dark:text-gray-200">Phone:</strong><p class="text-gray-600 dark:text-gray-400">${user.phone_number}</p></div>
             <div><strong class="text-gray-700 dark:text-gray-200">State of Origin:</strong><p class="text-gray-600 dark:text-gray-400">${user.state_origin || 'N/A'}</p></div>
             <div><strong class="text-gray-700 dark:text-gray-200">LGA of Origin:</strong><p class="text-gray-600 dark:text-gray-400">${user.lga_origin || 'N/A'}</p></div>
@@ -423,8 +464,10 @@ function editUser(userId) {
     document.getElementById('staffId').value = user.staff_id;
     document.getElementById('phoneNumber').value = user.phone_number || '';
     document.getElementById('email').value = user.official_email;
-    document.getElementById('position').value = user.position;
+    document.getElementById('faculty').value = user.faculty || '';
+    updateDepartments();
     document.getElementById('department').value = user.department;
+    document.getElementById('position').value = user.position;
     document.getElementById('salaryStructure').value = user.salary_structure || '';
     document.getElementById('gl').value = user.gl || '';
     document.getElementById('step').value = user.step || '';
@@ -443,6 +486,13 @@ function editUser(userId) {
 
 function saveUser() {
     const userId = document.getElementById('userId').value;
+    const submitBtn = document.querySelector('#userForm button[type="submit"]');
+    const originalBtnContent = submitBtn.innerHTML;
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+
     const userData = {
         firstname: document.getElementById('firstName').value,
         surname: document.getElementById('lastName').value,
@@ -450,8 +500,9 @@ function saveUser() {
         staff_id: document.getElementById('staffId').value,
         phone_number: document.getElementById('phoneNumber').value,
         official_email: document.getElementById('email').value,
-        position: document.getElementById('position').value,
+        faculty: document.getElementById('faculty').value,
         department: document.getElementById('department').value,
+        position: document.getElementById('position').value,
         salary_structure: document.getElementById('salaryStructure').value,
         gl: document.getElementById('gl').value,
         step: document.getElementById('step').value,
@@ -469,16 +520,31 @@ function saveUser() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData)
     })
-    .then(r => r.json())
+    .then(async r => {
+        const text = await r.text();
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            console.error('Server response was not valid JSON:', text);
+            throw new Error('Invalid server response');
+        }
+    })
     .then(data => {
         if (data.success) {
             showDialog('Success', data.message, 'success');
             setTimeout(() => { closeUserModal(); loadUsers(); }, 1500);
         } else {
             showDialog('Error', data.message, 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnContent;
         }
     })
-    .catch(e => showDialog('Error', 'Failed to save user', 'error'));
+    .catch(e => {
+        console.error('Save error:', e);
+        showDialog('Error', e.message || 'Failed to save user', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnContent;
+    });
 }
 
 function deleteUser(userId) {

@@ -10,13 +10,16 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'superadmin') {
     exit;
 }
 
+// Release session lock
+session_write_close();
+
 $db = Database::getInstance()->getConnection();
 
 try {
     $stmt = $db->prepare("
-        SELECT id, firstname, surname, othername, staff_id, official_email, position, department, 
-               salary_structure, gl, step, rank, phone_number, state_origin, lga_origin, is_active, profile_picture, created_at 
-        FROM admin_users 
+        SELECT id, firstname, surname, othername, staff_id, official_email, position, department, faculty,
+               salary_structure, gl, step, rank, phone_number, state_origin, lga_origin, is_active, profile_picture, created_at
+        FROM admin_users
         ORDER BY firstname ASC
     ");
     $stmt->execute();

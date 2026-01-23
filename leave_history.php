@@ -7,6 +7,10 @@ $pageTitle = 'Leave History';
 require_once 'includes/head.php';
 
 $db = Database::getInstance();
+$adminId = $_SESSION['admin_id'];
+
+// Real-time check to complete any ended leave
+checkAndCompleteLeave($adminId);
 
 // Fetch leave applications
 $applications = $db->fetchAll(

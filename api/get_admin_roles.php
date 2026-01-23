@@ -11,6 +11,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'superadmin') {
     exit;
 }
 
+// Release session lock
+session_write_close();
+
 if (!isset($_GET['admin_id'])) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'admin_id required']);
@@ -23,12 +26,12 @@ $db = Database::getInstance()->getConnection();
 try {
     // Get current roles for the admin (where removed_at is NULL)
     $stmt = $db->prepare("
-        SELECT role_name FROM admin_roles 
+        SELECT role_name, department, faculty FROM admin_roles 
         WHERE admin_id = ? AND removed_at IS NULL
         ORDER BY role_name ASC
     ");
     $stmt->execute([$adminId]);
-    $roles = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    $roles = $stmt->fetchAll();
     
     echo json_encode(['success' => true, 'roles' => $roles]);
 } catch (Exception $e) {

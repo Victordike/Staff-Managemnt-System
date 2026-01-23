@@ -18,8 +18,15 @@ $admins = $db->prepare("
         au.surname,
         au.staff_id,
         au.position,
-        au.department,
-        GROUP_CONCAT(ar.role_name SEPARATOR ', ') as assigned_roles
+        au.department as user_department,
+        GROUP_CONCAT(
+            CONCAT(
+                ar.role_name, 
+                IF(ar.department IS NOT NULL, CONCAT(' (', ar.department, ')'), 
+                    IF(ar.faculty IS NOT NULL, CONCAT(' (', ar.faculty, ')'), '')
+                )
+            ) SEPARATOR ', '
+        ) as assigned_roles
     FROM admin_users au
     LEFT JOIN admin_roles ar ON au.id = ar.admin_id AND ar.removed_at IS NULL
     WHERE au.is_active = TRUE
@@ -28,6 +35,14 @@ $admins = $db->prepare("
 ");
 $admins->execute();
 $adminsList = $admins->fetchAll();
+
+// Faculty/School options with departments
+$faculties = [
+    'School of Applied Sciences' => ['Computer Science', 'Library and Information Science', 'Science Laboratory Technology', 'Statistics'],
+    'School of Business Studies' => ['Accountancy', 'Business Administration and Management', 'Maritime Transport and Business Studies', 'Petroleum Marketing and Business Studies', 'Public Administration'],
+    'School of Engineering Technology' => ['Chemical Engineering Technology', 'Electrical Electronics Engineering Technology', 'Industrial Safety and Environmental Engineering Technology', 'Mechanical Engineering Technology', 'Welding and Fabrication Technology', 'Mineral and Petroleum Resource Engineering Technology'],
+    'Administrative and Support Services' => ['Rectorate', 'Registry', 'Bursary', 'Internal Audit', 'Physical Planning', 'Works and Services', 'Security Unit', 'Medical Center', 'Library (Admin)', 'Student Affairs', 'Academic Planning', 'Information and Communication Technology (ICT)']
+];
 
 // Define available roles
 $availableRoles = [
@@ -58,6 +73,7 @@ $availableRoles = [
                     <tr class="border-b border-gray-200 dark:border-gray-700">
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Staff Name</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Staff ID</th>
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Department</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Position</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Assigned Roles</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">Action</th>
@@ -71,6 +87,9 @@ $availableRoles = [
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                             <?php echo htmlspecialchars($admin['staff_id']); ?>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
+                            <?php echo htmlspecialchars($admin['user_department']); ?>
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-800 dark:text-gray-200">
                             <?php echo htmlspecialchars($admin['position']); ?>
@@ -109,7 +128,7 @@ $availableRoles = [
         <!-- Available Roles -->
         <div class="mb-6">
             <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Available Roles:</label>
-            <div id="rolesCheckboxContainer" class="space-y-2">
+            <div id="rolesListContainer" class="space-y-4 max-h-60 overflow-y-auto pr-2">
                 <!-- Dynamically populated -->
             </div>
         </div>
@@ -134,6 +153,7 @@ $availableRoles = [
 
 <script>
 const availableRoles = <?php echo json_encode($availableRoles); ?>;
+const faculties = <?php echo json_encode($faculties); ?>;
 
 function showDialog(title, message, type = 'info') {
     const dialog = document.createElement('div');
@@ -195,22 +215,63 @@ function openRoleModal(adminId, adminName) {
             if (currentRoles.length === 0) {
                 document.getElementById('currentRolesDisplay').textContent = 'No roles assigned';
             } else {
-                document.getElementById('currentRolesDisplay').innerHTML = currentRoles.map(role => 
-                    '<span class="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs mr-2 mb-2">' + role + '</span>'
-                ).join('');
+                document.getElementById('currentRolesDisplay').innerHTML = currentRoles.map(role => {
+                    let label = role.role_name;
+                    if (role.department) label += ` (${role.department})`;
+                    else if (role.faculty) label += ` (${role.faculty})`;
+                    
+                    return `<span class="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded text-xs mr-2 mb-2">${label}</span>`;
+                }).join('');
             }
             
-            // Build checkboxes
-            const container = document.getElementById('rolesCheckboxContainer');
+            // Build roles list
+            const container = document.getElementById('rolesListContainer');
             container.innerHTML = '';
+            
             availableRoles.forEach(role => {
-                const isChecked = currentRoles.includes(role);
+                const roleData = currentRoles.find(r => r.role_name === role) || null;
+                const isChecked = roleData !== null;
+                
+                const roleId = `role_${role.replace(/\s+/g, '_')}`;
+                const hasFaculty = role === 'Dean' || role === 'Academic Dean';
+                const hasDept = role === 'HOD';
+                
+                let extraFields = '';
+                if (hasFaculty) {
+                    extraFields = `
+                        <div class="mt-2 ml-6 faculty-select-container ${!isChecked ? 'hidden' : ''}">
+                            <select class="input-field text-xs py-1 faculty-select" data-role="${role}">
+                                <option value="">Select Faculty/School</option>
+                                ${Object.keys(faculties).map(f => `<option value="${f}" ${roleData && roleData.faculty === f ? 'selected' : ''}>${f}</option>`).join('')}
+                            </select>
+                        </div>
+                    `;
+                } else if (hasDept) {
+                    extraFields = `
+                        <div class="mt-2 ml-6 dept-select-container ${!isChecked ? 'hidden' : ''}">
+                            <select class="input-field text-xs py-1 dept-faculty-select" data-role="${role}" onchange="updateDeptOptions(this)">
+                                <option value="">Select Faculty/School</option>
+                                ${Object.keys(faculties).map(f => `<option value="${f}" ${roleData && roleData.faculty === f ? 'selected' : ''}>${f}</option>`).join('')}
+                            </select>
+                            <select class="input-field text-xs py-1 mt-1 dept-select" data-role="${role}">
+                                <option value="">Select Department</option>
+                                ${roleData && roleData.faculty && faculties[roleData.faculty] ? 
+                                    faculties[roleData.faculty].map(d => `<option value="${d}" ${roleData.department === d ? 'selected' : ''}>${d}</option>`).join('') : ''}
+                            </select>
+                        </div>
+                    `;
+                }
+                
                 container.innerHTML += `
-                    <label class="flex items-center">
-                        <input type="checkbox" class="role-checkbox" value="${role}" ${isChecked ? 'checked' : ''} 
-                               class="w-4 h-4 rounded dark:bg-gray-700">
-                        <span class="ml-2 text-gray-700 dark:text-gray-300">${role}</span>
-                    </label>
+                    <div class="role-item border-b border-gray-100 dark:border-gray-700 pb-2">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="checkbox" class="role-checkbox w-4 h-4 rounded dark:bg-gray-700" 
+                                   value="${role}" ${isChecked ? 'checked' : ''} 
+                                   onchange="toggleRoleFields(this)">
+                            <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">${role}</span>
+                        </label>
+                        ${extraFields}
+                    </div>
                 `;
             });
             
@@ -218,8 +279,36 @@ function openRoleModal(adminId, adminName) {
             document.getElementById('roleModal').classList.remove('hidden');
         })
         .catch(error => {
+            console.error('Error loading roles:', error);
             showDialog('Error', 'Failed to load roles. Please try again.', 'error');
         });
+}
+
+function toggleRoleFields(checkbox) {
+    const parent = checkbox.closest('.role-item');
+    const extraContainer = parent.querySelector('.faculty-select-container, .dept-select-container');
+    if (extraContainer) {
+        if (checkbox.checked) {
+            extraContainer.classList.remove('hidden');
+        } else {
+            extraContainer.classList.add('hidden');
+        }
+    }
+}
+
+function updateDeptOptions(facSelect) {
+    const deptSelect = facSelect.nextElementSibling;
+    const faculty = facSelect.value;
+    
+    deptSelect.innerHTML = '<option value="">Select Department</option>';
+    if (faculty && faculties[faculty]) {
+        faculties[faculty].forEach(dept => {
+            const option = document.createElement('option');
+            option.value = dept;
+            option.textContent = dept;
+            deptSelect.appendChild(option);
+        });
+    }
 }
 
 function closeRoleModal() {
@@ -228,14 +317,42 @@ function closeRoleModal() {
 
 function saveRoles() {
     const adminId = document.getElementById('adminIdInModal').value;
-    const checkboxes = document.querySelectorAll('.role-checkbox');
+    const items = document.querySelectorAll('.role-item');
     const selectedRoles = [];
+    let isValid = true;
     
-    checkboxes.forEach(checkbox => {
+    items.forEach(item => {
+        if (!isValid) return;
+        const checkbox = item.querySelector('.role-checkbox');
         if (checkbox.checked) {
-            selectedRoles.push(checkbox.value);
+            const role = checkbox.value;
+            const roleObj = { role_name: role };
+            
+            const facultySelect = item.querySelector('.faculty-select, .dept-faculty-select');
+            const deptSelect = item.querySelector('.dept-select');
+            
+            if (facultySelect) {
+                if (!facultySelect.value && (role === 'Dean' || role === 'Academic Dean' || role === 'HOD')) {
+                    showDialog('Validation Error', `Please select a Faculty for the ${role} role`, 'error');
+                    isValid = false;
+                    return;
+                }
+                roleObj.faculty = facultySelect.value;
+            }
+            if (deptSelect) {
+                if (!deptSelect.value && role === 'HOD') {
+                    showDialog('Validation Error', `Please select a Department for the ${role} role`, 'error');
+                    isValid = false;
+                    return;
+                }
+                roleObj.department = deptSelect.value;
+            }
+            
+            selectedRoles.push(roleObj);
         }
     });
+    
+    if (!isValid) return;
     
     fetch('api/update_admin_roles.php', {
         method: 'POST',

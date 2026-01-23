@@ -16,6 +16,8 @@ $admin_user_id = $_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? null;
 
 // Notification counters
 $unread_notifications_count = 0;
+$unread_leave_notifications_count = 0;
+$total_unread_count = 0;
 $user_pending_documents_count = 0;
 $establishment_pending_count = 0;
 $registrar_pending_count = 0;
@@ -27,6 +29,14 @@ try {
             [$admin_user_id]
         );
         $unread_notifications_count = $unread_result['count'] ?? 0;
+
+        $unread_leave_result = $db->fetchOne(
+            "SELECT COUNT(*) as count FROM leave_notifications WHERE admin_id = ? AND is_read = 0",
+            [$admin_user_id]
+        );
+        $unread_leave_notifications_count = $unread_leave_result['count'] ?? 0;
+        
+        $total_unread_count = $unread_notifications_count + $unread_leave_notifications_count;
         
         $user_pending_result = $db->fetchOne(
             "SELECT COUNT(*) as count FROM document_submissions WHERE admin_id = ? AND approval_status IN ('pending', 'establishment_approved')",
@@ -293,9 +303,9 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                             <i class="fas fa-chevron-down text-xs ml-auto accordion-icon"></i>
                         </button>
                         <div class="accordion-content">
-                            <a href="upload_memo.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'upload_memo.php' ? 'active' : ''; ?>" data-tooltip="Upload Memo">
-                                <i class="fas fa-cloud-upload-alt text-lg w-6"></i>
-                                <span class="sidebar-text ml-3">Upload Memo</span>
+                            <a href="upload_memo.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'upload_memo.php' ? 'active' : ''; ?>" data-tooltip="Send Memo">
+                                <i class="fas fa-paper-plane text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Send Memo</span>
                             </a>
                             <a href="manage_memos.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'manage_memos.php' ? 'active' : ''; ?>" data-tooltip="Manage Memos">
                                 <i class="fas fa-tasks text-lg w-6"></i>
@@ -383,6 +393,9 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                             <a href="leave_history.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'leave_history.php' ? 'active' : ''; ?>" data-tooltip="Leave History">
                                 <i class="fas fa-history text-lg w-6"></i>
                                 <span class="sidebar-text ml-3">Leave History</span>
+                                <?php if ($unread_leave_notifications_count > 0): ?>
+                                    <span class="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full"><?php echo $unread_leave_notifications_count; ?></span>
+                                <?php endif; ?>
                             </a>
                             <a href="resumption_duty.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'resumption_duty.php' ? 'active' : ''; ?>" data-tooltip="Resumption of Duty">
                                 <i class="fas fa-walking text-lg w-6"></i>

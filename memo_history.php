@@ -20,7 +20,7 @@ try {
     if (!$admin_id) {
         $memos = [];
     } else {
-        // Build query based on filters (deduplicated by file_path, showing only most recent)
+        // Build query based on filters
         $query = "SELECT m.*, au.firstname, au.surname as lastname, mr.read_at
                  FROM memos m
                  JOIN memo_recipients mr ON m.id = mr.memo_id
@@ -45,32 +45,6 @@ try {
                 $query .= " AND m.file_type IN ('application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')";
             }
         }
-        
-        // Deduplicate by file_path, showing only most recent
-        $query .= " AND m.id IN (
-            SELECT MAX(m2.id)
-            FROM memos m2
-            JOIN memo_recipients mr2 ON m2.id = mr2.memo_id
-            WHERE mr2.recipient_id = ?";
-        $params[] = $admin_id;
-        
-        if ($filter_status === 'read') {
-            $query .= " AND mr2.read_at IS NOT NULL";
-        } elseif ($filter_status === 'unread') {
-            $query .= " AND mr2.read_at IS NULL";
-        }
-        
-        if ($filter_type !== 'all') {
-            if ($filter_type === 'image') {
-                $query .= " AND m2.file_type IN ('image/jpeg', 'image/png', 'image/gif')";
-            } elseif ($filter_type === 'pdf') {
-                $query .= " AND m2.file_type = 'application/pdf'";
-            } elseif ($filter_type === 'document') {
-                $query .= " AND m2.file_type IN ('application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')";
-            }
-        }
-        
-        $query .= " GROUP BY m2.file_path)";
         
         $query .= " ORDER BY m.created_at DESC";
         

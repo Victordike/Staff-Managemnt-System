@@ -11,6 +11,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'superadmin') {
     exit;
 }
 
+// Release session lock
+session_write_close();
+
 $data = json_decode(file_get_contents('php://input'), true);
 
 if (empty($data['id'])) {
@@ -23,13 +26,13 @@ $db = Database::getInstance()->getConnection();
 
 try {
     $stmt = $db->prepare("
-        UPDATE admin_users 
-        SET firstname = ?, surname = ?, othername = ?, staff_id = ?, official_email = ?, 
-            position = ?, department = ?, salary_structure = ?, gl = ?, step = ?, rank = ?,
+        UPDATE admin_users
+        SET firstname = ?, surname = ?, othername = ?, staff_id = ?, official_email = ?,
+            position = ?, department = ?, faculty = ?, salary_structure = ?, gl = ?, step = ?, rank = ?,
             phone_number = ?, state_origin = ?, lga_origin = ?
         WHERE id = ?
     ");
-    
+
     $stmt->execute([
         $data['firstname'],
         $data['surname'],
@@ -38,6 +41,7 @@ try {
         $data['official_email'],
         $data['position'],
         $data['department'],
+        $data['faculty'] ?? '',
         $data['salary_structure'] ?? '',
         $data['gl'] ?? '',
         $data['step'] ?? '',

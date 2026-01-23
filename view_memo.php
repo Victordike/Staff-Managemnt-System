@@ -74,6 +74,35 @@ if (!$can_view) {
                 <i class="fas fa-download mr-2"></i>Download
             </a>
         </div>
+        
+        <?php if ($memo['status'] === 'rejected'): ?>
+            <div class="mt-4 p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg">
+                <h3 class="font-bold text-red-800 dark:text-red-200">
+                    <i class="fas fa-times-circle mr-2"></i>Memo Rejected
+                </h3>
+                <p class="text-sm text-red-700 dark:text-red-300 mt-1">
+                    <strong>Reason:</strong> <?php echo htmlspecialchars($memo['rejection_reason']); ?>
+                </p>
+                <p class="text-xs text-red-600 dark:text-red-400 mt-2">
+                    Rejected on <?php echo date('F j, Y \a\t g:i A', strtotime($memo['rejected_at'])); ?>
+                </p>
+            </div>
+        <?php elseif ($memo['current_stage'] !== 'completed' && $memo['recipient_id'] == ($_SESSION['admin_id'] ?? $_SESSION['user_id'])): ?>
+            <div class="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div>
+                    <h3 class="font-bold text-yellow-800 dark:text-yellow-200">Action Required</h3>
+                    <p class="text-sm text-yellow-700 dark:text-yellow-300">This memo requires your approval or rejection (Current stage: <?php echo str_replace('_', ' ', $memo['current_stage']); ?>).</p>
+                </div>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="forwardMemo(<?php echo $memo['id']; ?>)" class="btn-primary bg-green-600 hover:bg-green-700 border-none flex-1">
+                        <i class="fas fa-check mr-2"></i>Approve & Forward
+                    </button>
+                    <button onclick="showRejectModal()" class="btn-primary bg-red-600 hover:bg-red-700 border-none flex-1">
+                        <i class="fas fa-times mr-2"></i>Reject
+                    </button>
+                </div>
+            </div>
+        <?php endif; ?>
     </div>
 
     <!-- Memo Description -->
@@ -170,5 +199,105 @@ if (!$can_view) {
         </a>
     </div>
 </div>
+
+<!-- Rejection Modal -->
+<div id="rejectModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+        <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Reject Memo</h3>
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reason for Rejection *</label>
+            <textarea id="rejectionReason" class="input-field w-full h-32" placeholder="Explain why this memo is being rejected..."></textarea>
+        </div>
+        <div class="flex justify-end gap-3">
+            <button onclick="hideRejectModal()" class="btn-secondary">Cancel</button>
+            <button onclick="submitRejection(<?php echo $memo['id']; ?>)" id="confirmRejectBtn" class="btn-primary bg-red-600 hover:bg-red-700 border-none">
+                Confirm Rejection
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function showRejectModal() {
+    document.getElementById('rejectModal').classList.remove('hidden');
+}
+
+function hideRejectModal() {
+    document.getElementById('rejectModal').classList.add('hidden');
+}
+
+function submitRejection(memoId) {
+    const reason = document.getElementById('rejectionReason').value.trim();
+    if (!reason) {
+        alert('Please provide a reason for rejection.');
+        return;
+    }
+    
+    const btn = document.getElementById('confirmRejectBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Rejecting...';
+    
+    const formData = new FormData();
+    formData.append('memo_id', memoId);
+    formData.append('reason', reason);
+    
+    fetch('api/reject_memo.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.message);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+
+function forwardMemo(memoId) {
+    if (!confirm('Are you sure you want to forward this memo to the next stage?')) return;
+    
+    const btn = event.currentTarget;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Forwarding...';
+    
+    const formData = new FormData();
+    formData.append('memo_id', memoId);
+    
+    fetch('api/forward_memo.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.message);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+</script>
 
 <?php require_once 'includes/foot.php'; ?>

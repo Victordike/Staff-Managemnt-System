@@ -11,6 +11,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'superadmin') {
     exit;
 }
 
+// Release session lock
+session_write_close();
+
 $data = json_decode(file_get_contents('php://input'), true);
 
 $required = ['firstname', 'surname', 'staff_id', 'official_email', 'position', 'department', 'password'];
@@ -53,14 +56,14 @@ try {
     $stmt = $db->prepare("
         INSERT INTO admin_users (
             firstname, surname, othername, staff_id, official_email, 
-            position, department, salary_structure, gl, step, rank, 
+            faculty, position, department, salary_structure, gl, step, rank, 
             password, phone_number, state_origin, lga_origin,
             date_of_birth, sex, marital_status, permanent_home_address,
             bank_name, account_name, account_number, pfa_name, pfa_pin,
             nok_fullname, nok_phone_number, nok_relationship, nok_address,
             is_active
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '1990-01-01', 'Other', 'Single', 'N/A', 'N/A', 'N/A', '0000000000', 'N/A', '0000', 'N/A', '0000', 'N/A', 'N/A', TRUE)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '1990-01-01', 'Other', 'Single', 'N/A', 'N/A', 'N/A', '0000000000', 'N/A', '0000', 'N/A', '0000', 'N/A', 'N/A', TRUE)
     ");
     
     $stmt->execute([
@@ -69,6 +72,7 @@ try {
         $data['othername'] ?? '',
         $data['staff_id'],
         $data['official_email'],
+        $data['faculty'] ?? '',
         $data['position'],
         $data['department'],
         $data['salary_structure'] ?? '',

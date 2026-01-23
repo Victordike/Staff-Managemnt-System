@@ -46,7 +46,7 @@ try {
     
     // Search by title
     if (!empty($search)) {
-        $query .= " AND m.title ILIKE ?";
+        $query .= " AND m.title LIKE ?";
         $params[] = '%' . $search . '%';
     }
     

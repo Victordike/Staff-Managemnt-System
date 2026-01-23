@@ -32,6 +32,14 @@ $steps = [
     5 => 'Account Security'
 ];
 
+// Faculty/School options with departments
+$faculties = [
+    'School of Applied Sciences' => ['Computer Science', 'Library and Information Science', 'Science Laboratory Technology', 'Statistics'],
+    'School of Business Studies' => ['Accountancy', 'Business Administration and Management', 'Maritime Transport and Business Studies', 'Petroleum Marketing and Business Studies', 'Public Administration'],
+    'School of Engineering Technology' => ['Chemical Engineering Technology', 'Electrical Electronics Engineering Technology', 'Industrial Safety and Environmental Engineering Technology', 'Mechanical Engineering Technology', 'Welding and Fabrication Technology', 'Mineral and Petroleum Resource Engineering Technology'],
+    'Administrative and Support Services' => ['Rectorate', 'Registry', 'Bursary', 'Internal Audit', 'Physical Planning', 'Works and Services', 'Security Unit', 'Medical Center', 'Library (Admin)', 'Student Affairs', 'Academic Planning', 'Information and Communication Technology (ICT)']
+];
+
 // Load draft data from database on page load
 $draft = null;
 try {
@@ -57,6 +65,7 @@ $personal = $_SESSION['personal_data'] ?? ($draft ? [
 ]);
 
 $employment = $_SESSION['employment_data'] ?? ($draft ? [
+    'faculty' => $draft['faculty'] ?? '',
     'department' => $draft['department'],
     'position' => $draft['position'],
     'employment_type' => $draft['type_of_employment'],
@@ -146,6 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                 case 2:
                     $employment = [
+                        'faculty' => sanitize($_POST['faculty'] ?? ''),
                         'department' => sanitize($_POST['department'] ?? ''),
                         'position' => sanitize($_POST['position'] ?? ''),
                         'employment_type' => sanitize($_POST['employment_type'] ?? ''),
@@ -188,8 +198,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $existingDraft = $db->fetchOne("SELECT id FROM registration_draft WHERE staff_id = ?", [$preUser['staff_id']]);
                     if ($existingDraft) {
                         $db->query(
-                            "UPDATE registration_draft SET department = ?, position = ?, type_of_employment = ?, date_of_assumption = ?, cadre = ?, salary_structure = ?, gl = ?, step = ?, rank = ?, phone_number = ?, official_email = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE staff_id = ?",
-                            [$employment['department'] ?: null, $employment['position'] ?: null, $employment['employment_type'] ?: null, $employment['assumption_date'] ?: null, $employment['cadre'] ?: null, $employment['salary_structure'] ?: null, $employment['gl'] ?: null, $employment['step'] ?: null, $employment['rank'] ?: null, $employment['phone'] ?: null, $employment['email'] ?: null, $exitReg ? $currentStep : ($moveNext ? 3 : $currentStep), $preUser['staff_id']]
+                            "UPDATE registration_draft SET faculty = ?, department = ?, position = ?, type_of_employment = ?, date_of_assumption = ?, cadre = ?, salary_structure = ?, gl = ?, step = ?, rank = ?, phone_number = ?, official_email = ?, current_step = ?, updated_at = CURRENT_TIMESTAMP WHERE staff_id = ?",
+                            [$employment['faculty'] ?: null, $employment['department'] ?: null, $employment['position'] ?: null, $employment['employment_type'] ?: null, $employment['assumption_date'] ?: null, $employment['cadre'] ?: null, $employment['salary_structure'] ?: null, $employment['gl'] ?: null, $employment['step'] ?: null, $employment['rank'] ?: null, $employment['phone'] ?: null, $employment['email'] ?: null, $exitReg ? $currentStep : ($moveNext ? 3 : $currentStep), $preUser['staff_id']]
                         );
                     }
                     
@@ -293,7 +303,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // Validate all previous steps are complete
                     $allPersonalFilled = !empty($personal['dob']) && !empty($personal['sex']) && !empty($personal['marital_status']) && !empty($personal['address']) && !empty($personal['state']) && !empty($personal['lga']);
-                    $allEmploymentFilled = !empty($employment['department']) && !empty($employment['position']) && !empty($employment['employment_type']) && !empty($employment['assumption_date']) && !empty($employment['salary_structure']) && !empty($employment['gl']) && !empty($employment['step']) && !empty($employment['rank']) && !empty($employment['phone']) && !empty($employment['email']);
+                    $allEmploymentFilled = !empty($employment['faculty']) && !empty($employment['department']) && !empty($employment['position']) && !empty($employment['employment_type']) && !empty($employment['assumption_date']) && !empty($employment['salary_structure']) && !empty($employment['gl']) && !empty($employment['step']) && !empty($employment['rank']) && !empty($employment['phone']) && !empty($employment['email']);
                     $allBankingFilled = !empty($banking['bank_name']) && !empty($banking['account_name']) && !empty($banking['account_number']) && !empty($banking['pfa_name']) && !empty($banking['pfa_pin']);
                     $allNokFilled = !empty($nok['nok_name']) && !empty($nok['nok_phone']) && !empty($nok['nok_relationship']) && !empty($nok['nok_address']);
                     
@@ -338,13 +348,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         "INSERT INTO admin_users (
                             staff_id, surname, firstname, othername,
                             date_of_birth, sex, marital_status, permanent_home_address, state_origin, lga_origin,
-                            department, position, type_of_employment, date_of_assumption, cadre,
+                            faculty, department, position, type_of_employment, date_of_assumption, cadre,
                             salary_structure, gl, step, rank,
                             phone_number, official_email,
                             bank_name, account_name, account_number, pfa_name, pfa_pin,
                             nok_fullname, nok_phone_number, nok_relationship, nok_address,
                             password, profile_picture, is_active
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
                         [
                             $preUser['staff_id'],
                             $preUser['surname'],
@@ -356,6 +366,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $personal['address'] ?? null,
                             $personal['state'] ?? null,
                             $personal['lga'] ?? null,
+                            $employment['faculty'] ?? null,
                             $employment['department'] ?? null,
                             $employment['position'] ?? null,
                             $employment['employment_type'] ?? null,
@@ -616,9 +627,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div>
                         <h2 class="text-2xl font-bold text-gray-800 mb-4"><i class="fas fa-briefcase text-blue-600 mr-2"></i>Employment Information</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
+                            <div class="md:col-span-2">
+                                <label class="block text-gray-700 font-semibold mb-2">Faculty/School</label>
+                                <select name="faculty" class="input-field">
+                                    <option value="">Select Faculty/School</option>
+                                    <?php foreach ($faculties as $faculty => $depts): ?>
+                                        <option value="<?php echo htmlspecialchars($faculty); ?>" <?php echo ($employment['faculty'] ?? '') === $faculty ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($faculty); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
                                 <label class="block text-gray-700 font-semibold mb-2">Department</label>
-                                <select name="department" class="input-field">
+                                <select name="department" id="department" class="input-field">
                                     <option value="">Select Department</option>
                                     <optgroup label="Academic Departments">
                                         <option value="Accountancy" <?php echo ($employment['department'] ?? '') === 'Accountancy' ? 'selected' : ''; ?>>Accountancy</option>
@@ -977,7 +999,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else if (position.includes('Principal')) {
                     minGL = 11; maxGL = 13;
                 } else if (position.includes('Senior')) {
-                    minGL = 08; maxGL = 10;
+                    minGL = 8; maxGL = 10;
                 } else if (position.includes(' I')) {
                     minGL = 8; maxGL = 9;
                 } else if (position.includes(' II')) {
@@ -1008,6 +1030,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (document.getElementById('salary_structure')) {
             updateGrades();
         }
+
+        // Faculty and Department filtering
+        const faculties = <?php echo json_encode($faculties); ?>;
+
+        function updateDepartments() {
+            const facultySelect = document.querySelector('select[name="faculty"]');
+            const departmentSelect = document.getElementById('department');
+            const selectedFaculty = facultySelect.value;
+
+            // Clear current options except first
+            departmentSelect.innerHTML = '<option value="">Select Department</option>';
+
+            if (selectedFaculty && faculties[selectedFaculty]) {
+                faculties[selectedFaculty].forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept;
+                    option.textContent = dept;
+                    // Preserve selected if matches
+                    if (dept === '<?php echo addslashes($employment['department'] ?? ''); ?>') {
+                        option.selected = true;
+                    }
+                    departmentSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Add event listener for faculty change
+        document.addEventListener('DOMContentLoaded', function() {
+            const facultySelect = document.querySelector('select[name="faculty"]');
+            if (facultySelect) {
+                facultySelect.addEventListener('change', updateDepartments);
+                // Initial update on page load
+                updateDepartments();
+            }
+        });
     </script>
 </body>
 </html>

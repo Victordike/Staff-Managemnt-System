@@ -3,8 +3,8 @@ $pageTitle = 'Upload Memo';
 require_once 'includes/head.php';
 require_once 'includes/blur_detection.php';
 
-// Check if user is superadmin
-if ($userRole !== 'superadmin') {
+// Check if user is superadmin or admin
+if ($userRole !== 'superadmin' && $userRole !== 'admin') {
     http_response_code(403);
     die('Access denied');
 }
@@ -12,22 +12,46 @@ if ($userRole !== 'superadmin') {
 $error = '';
 $success = '';
 
+try {
+    $db = Database::getInstance();
+    $sender_id = $_SESSION['user_id'] ?? null;
+    
+    // Check if sender is management level
+    $is_rector = hasRole($sender_id, 'Rector', $db);
+    $is_registrar = hasRole($sender_id, 'Registrar', $db);
+    $is_dean = hasRole($sender_id, 'Dean', $db) || hasRole($sender_id, 'Academic Dean', $db);
+    $is_management = $is_rector || $is_registrar || $is_dean || $userRole === 'superadmin';
+} catch (Exception $e) {
+    $is_management = false;
+    $db = null;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = sanitize($_POST['title'] ?? '');
     $description = sanitize($_POST['description'] ?? '');
-    $recipient_type = sanitize($_POST['recipient_type'] ?? 'all');
+    $recipient_type = sanitize($_POST['recipient_type'] ?? ($is_management ? 'all' : 'single'));
     $recipient_id = null;
+    $final_recipient_id = null;
+    $current_stage = 'completed';
+    $is_approved = 1;
     $enable_validation = isset($_POST['enable_validation']) ? true : false;
     $required_text = sanitize($_POST['required_text'] ?? '');
     
+    if (!$db) $db = Database::getInstance();
+    $sender_id = $_SESSION['user_id'];
+
     if ($recipient_type === 'single') {
-        $recipient_id = !empty($_POST['recipient_id']) ? intval($_POST['recipient_id']) : null;
+        $final_recipient_id = !empty($_POST['recipient_id']) ? intval($_POST['recipient_id']) : null;
     }
     
     if (!$title || !isset($_FILES['memo_file'])) {
         $error = 'Title and file are required';
-    } elseif ($recipient_type === 'single' && !$recipient_id) {
+    } elseif ($recipient_type === 'single' && !$final_recipient_id) {
         $error = 'Please select a staff member when sending to a specific person';
+    } elseif ($recipient_type === 'faculty' && empty($_POST['faculty_name'])) {
+        $error = 'Please select a faculty';
+    } elseif ($recipient_type === 'department' && empty($_POST['department_name'])) {
+        $error = 'Please select a department';
     } elseif ($_FILES['memo_file']['error'] !== UPLOAD_ERR_OK) {
         $error = 'File upload failed';
     } else {
@@ -66,46 +90,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if (move_uploaded_file($_FILES['memo_file']['tmp_name'], $upload_path)) {
                     try {
-                        $db = Database::getInstance();
-                        
+                        // Handle Routing for Admin Users (only for single recipient and if NOT management)
+                        if ($userRole === 'admin' && $recipient_type === 'single' && !$is_management) {
+                            list($recipient_id, $current_stage, $is_approved) = calculateMemoRouting($sender_id, $final_recipient_id, $db);
+                        } else {
+                            $recipient_id = ($recipient_type === 'single') ? $final_recipient_id : null;
+                        }
+
                         // Insert memo
                         $db->query(
-                            "INSERT INTO memos (sender_id, title, description, file_path, file_type, recipient_type, recipient_id, blur_detected) 
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
-                            [$_SESSION['user_id'], $title, $description, $upload_path, $file_type, $recipient_type, $recipient_id, $blur_detected]
+                            "INSERT INTO memos (sender_id, title, description, file_path, file_type, recipient_type, recipient_id, final_recipient_id, current_stage, is_approved, blur_detected) 
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            [$sender_id, $title, $description, $upload_path, $file_type, $recipient_type, $recipient_id, $final_recipient_id, $current_stage, $is_approved, $blur_detected]
                         );
                         
-                        $result = $db->fetchOne(
-                            "SELECT id FROM memos WHERE file_path = ? ORDER BY created_at DESC LIMIT 1",
-                            [$upload_path]
-                        );
-                        $memo_id = $result['id'] ?? null;
+                        $memo_id = $db->lastInsertId();
                         
                         if ($memo_id) {
-                            // Add recipients
+                            // Add recipients based on type
+                            $recipients = [];
+                            
                             if ($recipient_type === 'all') {
-                                $admins = $db->fetchAll("SELECT id FROM admin_users WHERE is_active = true");
-                                foreach ($admins as $admin) {
-                                    $db->query(
-                                        "INSERT INTO memo_recipients (memo_id, recipient_id) VALUES (?, ?)",
-                                        [$memo_id, $admin['id']]
-                                    );
-                                }
+                                $recipients = getAllStaff($db);
+                            } else if ($recipient_type === 'all_deans') {
+                                $recipients = getAllDeans($db);
+                            } else if ($recipient_type === 'all_hods') {
+                                $recipients = getAllHODs($db);
+                            } else if ($recipient_type === 'faculty') {
+                                $recipients = getStaffByFaculty($_POST['faculty_name'], $db);
+                            } else if ($recipient_type === 'department') {
+                                $recipients = getStaffByDepartment($_POST['department_name'], $db);
                             } else if ($recipient_id) {
+                                // For routed memos, only the FIRST recipient in the chain gets it initially
+                                $recipients = [['id' => $recipient_id]];
+                            }
+                            
+                            foreach ($recipients as $r) {
                                 $db->query(
-                                    "INSERT INTO memo_recipients (memo_id, recipient_id) VALUES (?, ?)",
-                                    [$memo_id, $recipient_id]
+                                    "INSERT IGNORE INTO memo_recipients (memo_id, recipient_id) VALUES (?, ?)",
+                                    [$memo_id, $r['id']]
                                 );
                             }
                             
-                            $success = 'Memo uploaded and sent successfully!';
+                            $success = 'Memo uploaded ' . ($is_approved ? 'and sent' : 'and forwarded for approval') . ' successfully!';
                             $_POST = [];
                         } else {
                             throw new Exception('Failed to retrieve memo ID after insertion');
                         }
                     } catch (Exception $e) {
                         $error = 'Database error: ' . $e->getMessage();
-                        unlink($upload_path);
+                        if (file_exists($upload_path)) unlink($upload_path);
                     }
                 } else {
                     $error = 'Failed to upload file';
@@ -115,12 +149,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get list of active admins
+// Get list of active admins and faculty/dept data
 try {
-    $db = Database::getInstance();
+    if (!$db) $db = Database::getInstance();
     $admins = $db->fetchAll("SELECT id, firstname, surname, official_email FROM admin_users WHERE is_active = true ORDER BY firstname");
+    $faculties_data = getFacultiesAndDepartments();
 } catch (Exception $e) {
     $admins = [];
+    $faculties_data = [];
 }
 ?>
 
@@ -215,34 +251,87 @@ try {
                 <div>
                     <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-3">Send To *</label>
                     <div class="space-y-3">
+                        <?php if ($is_management): ?>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="recipient_type" value="all" checked class="form-radio">
+                                <span class="ml-2 text-gray-700 dark:text-gray-300">All Active Staff Members</span>
+                            </label>
+                        <?php endif; ?>
                         <label class="flex items-center cursor-pointer">
-                            <input type="radio" name="recipient_type" value="all" checked class="form-radio">
-                            <span class="ml-2 text-gray-700 dark:text-gray-300">All Active Staff Members</span>
-                        </label>
-                        <label class="flex items-center cursor-pointer">
-                            <input type="radio" name="recipient_type" value="single" class="form-radio">
+                            <input type="radio" name="recipient_type" value="single" <?php echo !$is_management ? 'checked' : ''; ?> class="form-radio">
                             <span class="ml-2 text-gray-700 dark:text-gray-300">Specific Staff Member</span>
                         </label>
+                        <?php if ($is_management): ?>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="recipient_type" value="all_deans" class="form-radio">
+                                <span class="ml-2 text-gray-700 dark:text-gray-300">All Deans</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="recipient_type" value="all_hods" class="form-radio">
+                                <span class="ml-2 text-gray-700 dark:text-gray-300">All HODs</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="recipient_type" value="faculty" class="form-radio">
+                                <span class="ml-2 text-gray-700 dark:text-gray-300">Specific Faculty</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="recipient_type" value="department" class="form-radio">
+                                <span class="ml-2 text-gray-700 dark:text-gray-300">Specific Department</span>
+                            </label>
+                        <?php endif; ?>
                     </div>
                 </div>
 
-                <!-- Recipient Dropdown -->
-                <div id="singleRecipient" class="hidden">
-                    <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Select Staff Member *</label>
-                    <select name="recipient_id" class="input-field w-full">
-                        <option value="">-- Choose a staff member --</option>
-                        <?php foreach ($admins as $admin): ?>
-                            <option value="<?php echo $admin['id']; ?>">
-                                <?php echo htmlspecialchars($admin['firstname'] . ' ' . $admin['surname'] . ' (' . $admin['official_email'] . ')'); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+                <!-- Conditional Dropdowns -->
+                <div class="space-y-4">
+                    <!-- Staff Dropdown -->
+                    <div id="singleRecipient" class="<?php echo !$is_management ? '' : 'hidden'; ?>">
+                        <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Select Staff Member *</label>
+                        <select name="recipient_id" class="input-field w-full">
+                            <option value="">-- Choose a staff member --</option>
+                            <?php foreach ($admins as $admin): ?>
+                                <option value="<?php echo $admin['id']; ?>">
+                                    <?php echo htmlspecialchars($admin['firstname'] . ' ' . $admin['surname'] . ' (' . $admin['official_email'] . ')'); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- Faculty Dropdown -->
+                    <div id="facultyRecipient" class="hidden">
+                        <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Select Faculty *</label>
+                        <select name="faculty_name" class="input-field w-full">
+                            <option value="">-- Choose a faculty --</option>
+                            <?php foreach (array_keys($faculties_data) as $faculty): ?>
+                                <option value="<?php echo htmlspecialchars($faculty); ?>">
+                                    <?php echo htmlspecialchars($faculty); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <!-- Department Dropdown -->
+                    <div id="departmentRecipient" class="hidden">
+                        <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Select Department *</label>
+                        <select name="department_name" class="input-field w-full">
+                            <option value="">-- Choose a department --</option>
+                            <?php foreach ($faculties_data as $faculty => $departments): ?>
+                                <optgroup label="<?php echo htmlspecialchars($faculty); ?>">
+                                    <?php foreach ($departments as $dept): ?>
+                                        <option value="<?php echo htmlspecialchars($dept); ?>">
+                                            <?php echo htmlspecialchars($dept); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </optgroup>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 </div>
             </div>
 
             <!-- Submit Button -->
             <div class="flex gap-3 pt-4">
-                <a href="superadmin_dashboard.php" class="btn-secondary flex-1 text-center">Cancel</a>
+                <a href="<?php echo $userRole === 'superadmin' ? 'superadmin_dashboard.php' : 'admin_dashboard.php'; ?>" class="btn-secondary flex-1 text-center">Cancel</a>
                 <button type="submit" class="btn-primary flex-1">
                     <i class="fas fa-paper-plane mr-2"></i>Send Memo
                 </button>
@@ -254,7 +343,9 @@ try {
 <script>
 document.querySelectorAll('input[name="recipient_type"]').forEach(radio => {
     radio.addEventListener('change', function() {
-        document.getElementById('singleRecipient').classList.toggle('hidden', this.value === 'all');
+        document.getElementById('singleRecipient').classList.toggle('hidden', this.value !== 'single');
+        document.getElementById('facultyRecipient').classList.toggle('hidden', this.value !== 'faculty');
+        document.getElementById('departmentRecipient').classList.toggle('hidden', this.value !== 'department');
     });
 });
 

@@ -337,6 +337,10 @@ if ($userRole === 'admin' && isset($_SESSION['staff_id'])) {
                             <i class="fas fa-chevron-down text-xs ml-auto accordion-icon"></i>
                         </button>
                         <div class="accordion-content">
+                            <a href="upload_memo.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'upload_memo.php' ? 'active' : ''; ?>" data-tooltip="Send Memo">
+                                <i class="fas fa-paper-plane text-lg w-6"></i>
+                                <span class="sidebar-text ml-3">Send Memo</span>
+                            </a>
                             <a href="view_received_memos.php" class="sidebar-link accordion-link <?php echo basename($_SERVER['PHP_SELF']) === 'view_received_memos.php' ? 'active' : ''; ?>" data-tooltip="Received Memos">
                                 <i class="fas fa-inbox text-lg w-6"></i>
                                 <span class="sidebar-text ml-3">Received Memos</span>

@@ -1,0 +1,3 @@
+@echo off
+echo Starting Tailwind CSS Watcher...
+npm run watch:css

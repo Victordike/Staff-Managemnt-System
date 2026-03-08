@@ -379,14 +379,19 @@ function getStaffByDepartment($department, $db) {
 }
 
 /**
- * Find HOD of a department
+ * Find HOD or Unit Head of a department
  */
 function getHOD($department, $db) {
+    // List of roles that can act as a department or unit head
+    $head_roles = ['HOD', 'Director of ICT', 'Unit Head', 'Coordinator', 'Provost'];
+    $placeholders = implode(',', array_fill(0, count($head_roles), '?'));
+    
     $sql = "SELECT au.id FROM admin_users au 
             JOIN admin_roles ar ON au.id = ar.admin_id 
-            WHERE ar.role_name = 'HOD' AND ar.department = ? AND ar.removed_at IS NULL AND au.is_active = TRUE 
+            WHERE ar.role_name IN ($placeholders) AND ar.department = ? AND ar.removed_at IS NULL AND au.is_active = TRUE 
             LIMIT 1";
-    $result = $db->fetchOne($sql, [$department]);
+    $params = array_merge($head_roles, [$department]);
+    $result = $db->fetchOne($sql, $params);
     return $result ? $result['id'] : null;
 }
 
@@ -409,6 +414,18 @@ function getRegistrar($db) {
     $sql = "SELECT au.id FROM admin_users au 
             JOIN admin_roles ar ON au.id = ar.admin_id 
             WHERE ar.role_name = 'Registrar' AND ar.removed_at IS NULL AND au.is_active = TRUE 
+            LIMIT 1";
+    $result = $db->fetchOne($sql);
+    return $result ? $result['id'] : null;
+}
+
+/**
+ * Find Bursar
+ */
+function getBursar($db) {
+    $sql = "SELECT au.id FROM admin_users au 
+            JOIN admin_roles ar ON au.id = ar.admin_id 
+            WHERE ar.role_name = 'Bursar' AND ar.removed_at IS NULL AND au.is_active = TRUE 
             LIMIT 1";
     $result = $db->fetchOne($sql);
     return $result ? $result['id'] : null;
@@ -487,8 +504,8 @@ function hasRole($admin_id, $role_name, $db) {
  */
 function calculateMemoRouting($sender_id, $target_id, $db) {
     // Get sender details
-    $sender = $db->fetchOne("SELECT department, position FROM admin_users WHERE id = ?", [$sender_id]);
-    $target = $db->fetchOne("SELECT department, position FROM admin_users WHERE id = ?", [$target_id]);
+    $sender = $db->fetchOne("SELECT department, position, staff_category FROM admin_users WHERE id = ?", [$sender_id]);
+    $target = $db->fetchOne("SELECT department, position, staff_category FROM admin_users WHERE id = ?", [$target_id]);
     
     if (!$sender || !$target) {
         return [$target_id, 'completed', 1];
@@ -498,21 +515,54 @@ function calculateMemoRouting($sender_id, $target_id, $db) {
     $target_dept = $target['department'];
     $sender_faculty = getFacultyByDepartment($sender_dept);
     $target_faculty = getFacultyByDepartment($target_dept);
+    $is_academic = ($sender['staff_category'] === 'Academic' && $sender_faculty !== 'Administrative and Support Services');
 
     // If target is HOD of same department, send direct
     $hod_id = getHOD($sender_dept, $db);
+    
+    // Fallback for non-academic departments if no specific Unit Head is found
+    if (!$hod_id) {
+        if ($sender_dept === 'Registry') $hod_id = getRegistrar($db);
+        elseif ($sender_dept === 'Bursary') $hod_id = getBursar($db);
+        elseif ($sender_dept === 'Rectorate') $hod_id = getRector($db);
+    }
+
+    // Academic Staff Routing Rule
+    if ($is_academic) {
+        // If target is HOD, it's direct and final
+        if ($target_id == $hod_id) {
+            return [$target_id, 'completed', 1];
+        }
+        
+        // Everything else from academic staff MUST go through HOD first
+        if ($hod_id && $sender_id != $hod_id) {
+            return [$hod_id, 'hod_approval', 0];
+        }
+    }
+
+    // Generic Routing for others or if sender IS the HOD
     if ($target_id == $hod_id) {
         return [$target_id, 'completed', 1];
     }
 
-    // Otherwise, start routing
-    // Stage 1: HOD
+    // Stage 1: HOD / Unit Head
     if ($hod_id && $sender_id != $hod_id) {
         return [$hod_id, 'hod_approval', 0];
     }
 
     // Stage 2: Dean (if sender is HOD or no HOD found)
     $dean_id = getDean($sender_faculty, $db);
+    
+    // Fallback for Administrative faculty: Registrar
+    if (!$dean_id) {
+        if ($sender_faculty === 'Administrative and Support Services') {
+            $dean_id = getRegistrar($db);
+        } else {
+            // Default fallback for academic faculties if no dean is found
+            $dean_id = getRector($db);
+        }
+    }
+
     if ($dean_id && $sender_id != $dean_id) {
         // If target is Dean, complete it
         if ($target_id == $dean_id) return [$target_id, 'completed', 1];
@@ -534,7 +584,7 @@ function calculateMemoRouting($sender_id, $target_id, $db) {
     }
 
     // Stage 5: Registrar (only if target is outside faculty or management level)
-    if ($sender_faculty !== $target_faculty || hasRole($target_id, 'Rector', $db) || hasRole($target_id, 'Registrar', $db) || hasRole($target_id, 'Deputy Rector', $db)) {
+    if ($sender_faculty !== $target_faculty || hasRole($target_id, 'Rector', $db) || hasRole($target_id, 'Registrar', $db) || hasRole($target_id, 'Deputy Rector', $db) || hasRole($target_id, 'Bursar', $db)) {
         $registrar_id = getRegistrar($db);
         if ($registrar_id && $sender_id != $registrar_id) {
             if ($target_id == $registrar_id) return [$target_id, 'completed', 1];
@@ -558,73 +608,93 @@ function forwardMemo($memo_id, $db) {
     $final_target_id = $memo['final_recipient_id'];
     $current_stage = $memo['current_stage'];
     
-    $sender = $db->fetchOne("SELECT department FROM admin_users WHERE id = ?", [$sender_id]);
-    $target = $db->fetchOne("SELECT department FROM admin_users WHERE id = ?", [$final_target_id]);
+    $sender = $db->fetchOne("SELECT department, staff_category FROM admin_users WHERE id = ?", [$sender_id]);
+    $target = $db->fetchOne("SELECT department, staff_category FROM admin_users WHERE id = ?", [$final_target_id]);
     $sender_dept = $sender['department'];
     $target_dept = $target['department'];
     $sender_faculty = getFacultyByDepartment($sender_dept);
     $target_faculty = getFacultyByDepartment($target_dept);
+    $is_academic_sender = ($sender['staff_category'] === 'Academic' && $sender_faculty !== 'Administrative and Support Services');
     
     $next_recipient_id = null;
     $next_stage = 'completed';
     
     if ($current_stage === 'hod_approval') {
-        // From HOD to Dean
-        $next_recipient_id = getDean($sender_faculty, $db);
-        $next_stage = 'dean_approval';
+        // HOD has approved. Where does it go next?
+        $dean_id = getDean($sender_faculty, $db);
         
-        // If no Dean, check if we need Establishment
-        if (!$next_recipient_id) {
-            $next_recipient_id = getEstablishment($db);
-            $next_stage = 'establishment_approval';
+        // If target is Dean of same faculty, complete it at Dean
+        if ($dean_id && $final_target_id == $dean_id) {
+            $next_recipient_id = $dean_id;
+            $next_stage = 'completed';
+        } 
+        // If target is in another department OR outside faculty, must go through Dean
+        elseif ($dean_id && ($target_dept != $sender_dept || $sender_faculty != $target_faculty)) {
+            $next_recipient_id = $dean_id;
+            $next_stage = 'dean_approval';
         }
-    } elseif ($current_stage === 'dean_approval') {
-        // From Dean to Establishment
-        $next_recipient_id = getEstablishment($db);
-        $next_stage = 'establishment_approval';
-        
-        // If no Establishment, check Registrar
-        if (!$next_recipient_id) {
-            if ($sender_faculty !== $target_faculty || hasRole($final_target_id, 'Rector', $db) || hasRole($final_target_id, 'Registrar', $db)) {
-                $next_recipient_id = getRegistrar($db);
-                $next_stage = 'registrar_approval';
-            } else {
-                $next_recipient_id = $final_target_id;
-                $next_stage = 'completed';
-            }
-        }
-    } elseif ($current_stage === 'establishment_approval') {
-        // From Establishment to Deputy Rector
-        $next_recipient_id = getDeputyRector($db);
-        $next_stage = 'deputy_rector_approval';
-        
-        // If no Deputy Rector, check Registrar
-        if (!$next_recipient_id) {
-            if ($sender_faculty !== $target_faculty || hasRole($final_target_id, 'Rector', $db) || hasRole($final_target_id, 'Registrar', $db) || hasRole($final_target_id, 'Deputy Rector', $db)) {
-                $next_recipient_id = getRegistrar($db);
-                $next_stage = 'registrar_approval';
-            } else {
-                $next_recipient_id = $final_target_id;
-                $next_stage = 'completed';
-            }
-        }
-    } elseif ($current_stage === 'deputy_rector_approval') {
-        // From Deputy Rector to Registrar
-        if ($sender_faculty !== $target_faculty || hasRole($final_target_id, 'Rector', $db) || hasRole($final_target_id, 'Registrar', $db) || hasRole($final_target_id, 'Deputy Rector', $db)) {
-            $next_recipient_id = getRegistrar($db);
-            $next_stage = 'registrar_approval';
-        } else {
+        else {
+            // Target is in same department but not HOD (already covered by direct send usually, but for safety)
             $next_recipient_id = $final_target_id;
             $next_stage = 'completed';
         }
-    } elseif ($current_stage === 'registrar_approval') {
-        // From Registrar to Final Target
-        $next_recipient_id = $final_target_id;
-        $next_stage = 'completed';
+    } 
+    elseif ($current_stage === 'dean_approval') {
+        // Dean has approved.
+        if ($sender_faculty !== $target_faculty) {
+            // Going outside faculty -> Registrar or Rector
+            $registrar_id = getRegistrar($db);
+            if ($registrar_id && $final_target_id != $registrar_id) {
+                $next_recipient_id = $registrar_id;
+                $next_stage = 'registrar_approval';
+            } else {
+                $next_recipient_id = $final_target_id;
+                $next_stage = 'completed';
+            }
+        } else {
+            // Within same faculty but another department
+            $next_recipient_id = $final_target_id;
+            $next_stage = 'completed';
+        }
+    }
+    else {
+        // Handle other stages (Establishment, Deputy Rector, Registrar)
+        $stages = [
+            'hod_approval' => 1,
+            'dean_approval' => 2,
+            'establishment_approval' => 3,
+            'deputy_rector_approval' => 4,
+            'registrar_approval' => 5,
+            'completed' => 6
+        ];
+        
+        $current_idx = $stages[$current_stage] ?? 0;
+        
+        for ($i = $current_idx + 1; $i <= 5; $i++) {
+            $stage_key = array_search($i, $stages);
+            $found_id = null;
+            
+            switch ($stage_key) {
+                case 'establishment_approval': $found_id = getEstablishment($db); break;
+                case 'deputy_rector_approval': $found_id = getDeputyRector($db); break;
+                case 'registrar_approval': $found_id = getRegistrar($db); break;
+            }
+            
+            if ($found_id && $found_id != $sender_id) {
+                if ($found_id == $final_target_id) {
+                    $next_recipient_id = $final_target_id;
+                    $next_stage = 'completed';
+                } else {
+                    $next_recipient_id = $found_id;
+                    $next_stage = $stage_key;
+                }
+                break;
+            }
+        }
     }
     
-    // Fallback if next recipient is null or same as final target
-    if (!$next_recipient_id || $next_recipient_id == $final_target_id) {
+    // Fallback
+    if (!$next_recipient_id) {
         $next_recipient_id = $final_target_id;
         $next_stage = 'completed';
     }

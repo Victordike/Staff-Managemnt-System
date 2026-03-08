@@ -18,8 +18,11 @@ try {
     if ($userRole === 'superadmin') {
         // Super admin can view their own sent memos
         $memo = $db->fetchOne(
-            "SELECT m.*, au.firstname, au.surname as lastname FROM memos m 
+            "SELECT m.*, au.firstname, au.surname as lastname, 
+                    tar.firstname as target_firstname, tar.surname as target_lastname, tar.department as target_dept
+             FROM memos m 
              JOIN admin_users au ON m.sender_id = au.id 
+             LEFT JOIN admin_users tar ON m.final_recipient_id = tar.id
              WHERE m.id = ?",
             [$memo_id]
         );
@@ -28,9 +31,12 @@ try {
         $admin_id = $_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? null;
         if ($admin_id) {
             $memo = $db->fetchOne(
-                "SELECT m.*, au.firstname, au.surname as lastname FROM memos m 
+                "SELECT m.*, au.firstname, au.surname as lastname,
+                        tar.firstname as target_firstname, tar.surname as target_lastname, tar.department as target_dept
+                 FROM memos m 
                  JOIN admin_users au ON m.sender_id = au.id 
                  JOIN memo_recipients mr ON m.id = mr.memo_id 
+                 LEFT JOIN admin_users tar ON m.final_recipient_id = tar.id
                  WHERE m.id = ? AND mr.recipient_id = ?",
                 [$memo_id, $admin_id]
             );
@@ -63,9 +69,14 @@ if (!$can_view) {
         <div class="flex justify-between items-start gap-4">
             <div class="flex-1">
                 <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2"><?php echo htmlspecialchars($memo['title']); ?></h1>
-                <p class="text-gray-600 dark:text-gray-300 mb-3">
+                <p class="text-gray-600 dark:text-gray-300 mb-1">
                     <i class="fas fa-user mr-2"></i>From: <strong><?php echo htmlspecialchars($memo['firstname'] . ' ' . $memo['lastname']); ?></strong>
                 </p>
+                <?php if ($memo['target_firstname']): ?>
+                <p class="text-gray-600 dark:text-gray-300 mb-3">
+                    <i class="fas fa-paper-plane mr-2"></i>Final Destination: <strong><?php echo htmlspecialchars($memo['target_firstname'] . ' ' . $memo['target_lastname'] . ' (' . $memo['target_dept'] . ')'); ?></strong>
+                </p>
+                <?php endif; ?>
                 <p class="text-sm text-gray-500 dark:text-gray-400">
                     <i class="fas fa-calendar mr-2"></i><?php echo date('F j, Y \a\t g:i A', strtotime($memo['created_at'])); ?>
                 </p>
@@ -91,12 +102,27 @@ if (!$can_view) {
             <div class="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div>
                     <h3 class="font-bold text-yellow-800 dark:text-yellow-200">Action Required</h3>
-                    <p class="text-sm text-yellow-700 dark:text-yellow-300">This memo requires your approval or rejection (Current stage: <?php echo str_replace('_', ' ', $memo['current_stage']); ?>).</p>
+                    <p class="text-sm text-yellow-700 dark:text-yellow-300">This memo requires your approval or rejection.</p>
                 </div>
                 <div class="flex gap-2 w-full sm:w-auto">
-                    <button onclick="forwardMemo(<?php echo $memo['id']; ?>)" class="btn-primary bg-green-600 hover:bg-green-700 border-none flex-1">
-                        <i class="fas fa-check mr-2"></i>Approve & Forward
+                    <?php 
+                    $user_id = $_SESSION['admin_id'] ?? $_SESSION['user_id'];
+                    $user_roles = $db->fetchAll("SELECT role_name FROM admin_roles WHERE admin_id = ? AND removed_at IS NULL", [$user_id]);
+                    $role_names = array_column($user_roles, 'role_name');
+                    $is_hod_or_dean = in_array('HOD', $role_names) || in_array('Dean', $role_names) || in_array('Academic Dean', $role_names);
+                    $btnText = ($memo['recipient_id'] == $memo['final_recipient_id']) ? 'Approve' : 'Approve & Forward';
+                    ?>
+                    
+                    <?php if ($is_hod_or_dean): ?>
+                    <button onclick="retainMemo(<?php echo $memo['id']; ?>)" class="btn-primary bg-blue-600 hover:bg-blue-700 border-none flex-1">
+                        <i class="fas fa-thumbtack mr-2"></i>Retain
                     </button>
+                    <?php endif; ?>
+
+                    <button onclick="forwardMemo(<?php echo $memo['id']; ?>)" class="btn-primary bg-green-600 hover:bg-green-700 border-none flex-1">
+                        <i class="fas fa-check mr-2"></i><?php echo $btnText; ?>
+                    </button>
+                    
                     <button onclick="showRejectModal()" class="btn-primary bg-red-600 hover:bg-red-700 border-none flex-1">
                         <i class="fas fa-times mr-2"></i>Reject
                     </button>
@@ -243,6 +269,40 @@ function submitRejection(memoId) {
     formData.append('reason', reason);
     
     fetch('api/reject_memo.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.message);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+
+function retainMemo(memoId) {
+    if (!confirm('Are you sure you want to retain this memo? It will be marked as completed and will not be forwarded further.')) return;
+    
+    const btn = event.currentTarget;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Retaining...';
+    
+    const formData = new FormData();
+    formData.append('memo_id', memoId);
+    
+    fetch('api/retain_memo.php', {
         method: 'POST',
         body: formData
     })

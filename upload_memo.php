@@ -16,11 +16,9 @@ try {
     $db = Database::getInstance();
     $sender_id = $_SESSION['user_id'] ?? null;
     
-    // Check if sender is management level
-    $is_rector = hasRole($sender_id, 'Rector', $db);
-    $is_registrar = hasRole($sender_id, 'Registrar', $db);
-    $is_dean = hasRole($sender_id, 'Dean', $db) || hasRole($sender_id, 'Academic Dean', $db);
-    $is_management = $is_rector || $is_registrar || $is_dean || $userRole === 'superadmin';
+    // Check if sender has any institutional role (HOD, Dean, Rector, etc.)
+    $functional_roles = getUserRoles($sender_id, $db);
+    $is_management = !empty($functional_roles) || $userRole === 'superadmin';
 } catch (Exception $e) {
     $is_management = false;
     $db = null;
@@ -90,8 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if (move_uploaded_file($_FILES['memo_file']['tmp_name'], $upload_path)) {
                     try {
-                        // Handle Routing for Admin Users (only for single recipient and if NOT management)
-                        if ($userRole === 'admin' && $recipient_type === 'single' && !$is_management) {
+                        // Handle Routing for Admin Users (for single recipient, regardless of management status)
+                        if ($userRole === 'admin' && $recipient_type === 'single') {
                             list($recipient_id, $current_stage, $is_approved) = calculateMemoRouting($sender_id, $final_recipient_id, $db);
                         } else {
                             $recipient_id = ($recipient_type === 'single') ? $final_recipient_id : null;
@@ -152,7 +150,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Get list of active admins and faculty/dept data
 try {
     if (!$db) $db = Database::getInstance();
-    $admins = $db->fetchAll("SELECT id, firstname, surname, official_email FROM admin_users WHERE is_active = true ORDER BY firstname");
+    
+    // Get sender's department for reference
+    $sender_data = $db->fetchOne("SELECT department FROM admin_users WHERE id = ?", [$sender_id]);
+    $user_dept = $sender_data['department'] ?? 'Unknown';
+
+    $dept_hod_id = null;
+    $dept_hod_data = null;
+    
+    if (!$is_management) {
+        $dept_hod_id = getHOD($user_dept, $db);
+        if ($dept_hod_id) {
+            $dept_hod_data = $db->fetchOne("SELECT id, firstname, surname, official_email FROM admin_users WHERE id = ?", [$dept_hod_id]);
+        }
+    }
+
+    if ($is_management) {
+        $admins = $db->fetchAll("SELECT id, firstname, surname, official_email FROM admin_users WHERE is_active = true ORDER BY firstname");
+    } else {
+        // For non-management users, show all staff so they can select a final recipient
+        // The routing logic in calculateMemoRouting will handle the "through" steps automatically
+        $admins = $db->fetchAll("SELECT id, firstname, surname, official_email FROM admin_users WHERE id != ? AND is_active = true ORDER BY firstname", [$sender_id]);
+    }
+    
     $faculties_data = getFacultiesAndDepartments();
 } catch (Exception $e) {
     $admins = [];
@@ -247,86 +267,123 @@ try {
             </div>
 
             <!-- Recipient Selection -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-3">Send To *</label>
-                    <div class="space-y-3">
-                        <?php if ($is_management): ?>
-                            <label class="flex items-center cursor-pointer">
-                                <input type="radio" name="recipient_type" value="all" checked class="form-radio">
-                                <span class="ml-2 text-gray-700 dark:text-gray-300">All Active Staff Members</span>
-                            </label>
-                        <?php endif; ?>
-                        <label class="flex items-center cursor-pointer">
-                            <input type="radio" name="recipient_type" value="single" <?php echo !$is_management ? 'checked' : ''; ?> class="form-radio">
-                            <span class="ml-2 text-gray-700 dark:text-gray-300">Specific Staff Member</span>
-                        </label>
-                        <?php if ($is_management): ?>
-                            <label class="flex items-center cursor-pointer">
-                                <input type="radio" name="recipient_type" value="all_deans" class="form-radio">
-                                <span class="ml-2 text-gray-700 dark:text-gray-300">All Deans</span>
-                            </label>
-                            <label class="flex items-center cursor-pointer">
-                                <input type="radio" name="recipient_type" value="all_hods" class="form-radio">
-                                <span class="ml-2 text-gray-700 dark:text-gray-300">All HODs</span>
-                            </label>
-                            <label class="flex items-center cursor-pointer">
-                                <input type="radio" name="recipient_type" value="faculty" class="form-radio">
-                                <span class="ml-2 text-gray-700 dark:text-gray-300">Specific Faculty</span>
-                            </label>
-                            <label class="flex items-center cursor-pointer">
-                                <input type="radio" name="recipient_type" value="department" class="form-radio">
-                                <span class="ml-2 text-gray-700 dark:text-gray-300">Specific Department</span>
-                            </label>
-                        <?php endif; ?>
-                    </div>
-                </div>
+            <div>
+                <?php if ($is_management): ?>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-3">Send To *</label>
+                            <div class="space-y-3">
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="recipient_type" value="all" checked class="form-radio">
+                                    <span class="ml-2 text-gray-700 dark:text-gray-300">All Active Staff Members</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="recipient_type" value="single" class="form-radio">
+                                    <span class="ml-2 text-gray-700 dark:text-gray-300">Specific Staff Member</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="recipient_type" value="all_deans" class="form-radio">
+                                    <span class="ml-2 text-gray-700 dark:text-gray-300">All Deans</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="recipient_type" value="all_hods" class="form-radio">
+                                    <span class="ml-2 text-gray-700 dark:text-gray-300">All HODs</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="recipient_type" value="faculty" class="form-radio">
+                                    <span class="ml-2 text-gray-700 dark:text-gray-300">Specific Faculty</span>
+                                </label>
+                                <label class="flex items-center cursor-pointer">
+                                    <input type="radio" name="recipient_type" value="department" class="form-radio">
+                                    <span class="ml-2 text-gray-700 dark:text-gray-300">Specific Department</span>
+                                </label>
+                            </div>
+                        </div>
 
-                <!-- Conditional Dropdowns -->
-                <div class="space-y-4">
-                    <!-- Staff Dropdown -->
-                    <div id="singleRecipient" class="<?php echo !$is_management ? '' : 'hidden'; ?>">
-                        <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Select Staff Member *</label>
-                        <select name="recipient_id" class="input-field w-full">
-                            <option value="">-- Choose a staff member --</option>
-                            <?php foreach ($admins as $admin): ?>
-                                <option value="<?php echo $admin['id']; ?>">
-                                    <?php echo htmlspecialchars($admin['firstname'] . ' ' . $admin['surname'] . ' (' . $admin['official_email'] . ')'); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <!-- Faculty Dropdown -->
-                    <div id="facultyRecipient" class="hidden">
-                        <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Select Faculty *</label>
-                        <select name="faculty_name" class="input-field w-full">
-                            <option value="">-- Choose a faculty --</option>
-                            <?php foreach (array_keys($faculties_data) as $faculty): ?>
-                                <option value="<?php echo htmlspecialchars($faculty); ?>">
-                                    <?php echo htmlspecialchars($faculty); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <!-- Department Dropdown -->
-                    <div id="departmentRecipient" class="hidden">
-                        <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Select Department *</label>
-                        <select name="department_name" class="input-field w-full">
-                            <option value="">-- Choose a department --</option>
-                            <?php foreach ($faculties_data as $faculty => $departments): ?>
-                                <optgroup label="<?php echo htmlspecialchars($faculty); ?>">
-                                    <?php foreach ($departments as $dept): ?>
-                                        <option value="<?php echo htmlspecialchars($dept); ?>">
-                                            <?php echo htmlspecialchars($dept); ?>
+                        <!-- Conditional Dropdowns -->
+                        <div class="space-y-4">
+                            <!-- Staff Dropdown -->
+                            <div id="singleRecipient" class="hidden">
+                                <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Select Staff Member *</label>
+                                <select name="recipient_id" class="input-field w-full">
+                                    <option value="">-- Choose a staff member --</option>
+                                    <?php foreach ($admins as $admin): ?>
+                                        <option value="<?php echo $admin['id']; ?>">
+                                            <?php echo htmlspecialchars($admin['firstname'] . ' ' . $admin['surname'] . ' (' . $admin['official_email'] . ')'); ?>
                                         </option>
                                     <?php endforeach; ?>
-                                </optgroup>
-                            <?php endforeach; ?>
-                        </select>
+                                </select>
+                            </div>
+
+                            <!-- Faculty Dropdown -->
+                            <div id="facultyRecipient" class="hidden">
+                                <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Select Faculty *</label>
+                                <select name="faculty_name" class="input-field w-full">
+                                    <option value="">-- Choose a faculty --</option>
+                                    <?php foreach (array_keys($faculties_data) as $faculty): ?>
+                                        <option value="<?php echo htmlspecialchars($faculty); ?>">
+                                            <?php echo htmlspecialchars($faculty); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <!-- Department Dropdown -->
+                            <div id="departmentRecipient" class="hidden">
+                                <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-2">Select Department *</label>
+                                <select name="department_name" class="input-field w-full">
+                                    <option value="">-- Choose a department --</option>
+                                    <?php foreach ($faculties_data as $faculty => $departments): ?>
+                                        <optgroup label="<?php echo htmlspecialchars($faculty); ?>">
+                                            <?php foreach ($departments as $dept): ?>
+                                                <option value="<?php echo htmlspecialchars($dept); ?>">
+                                                    <?php echo htmlspecialchars($dept); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </optgroup>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                <?php else: ?>
+                    <!-- Regular Staff Recipient Selection -->
+                    <div class="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <label class="block text-gray-700 dark:text-gray-300 font-semibold mb-4">
+                            <i class="fas fa-paper-plane mr-2 text-blue-500"></i>Recipient (Department HOD) *
+                        </label>
+                        <div class="space-y-4">
+                            <?php if ($dept_hod_data): ?>
+                                <div class="flex items-center p-4 bg-white dark:bg-gray-800 rounded-lg border border-blue-200 dark:border-blue-900 shadow-sm">
+                                    <div class="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 mr-4">
+                                        <i class="fas fa-user-tie"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-gray-800 dark:text-white"><?php echo htmlspecialchars($dept_hod_data['firstname'] . ' ' . $dept_hod_data['surname']); ?></p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400"><?php echo htmlspecialchars($dept_hod_data['official_email']); ?></p>
+                                    </div>
+                                    <input type="hidden" name="recipient_id" value="<?php echo $dept_hod_data['id']; ?>">
+                                </div>
+                            <?php else: ?>
+                                <div class="p-4 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-800">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    No HOD found for your department (<?php echo htmlspecialchars($user_dept); ?>). Please contact the administrator.
+                                </div>
+                                <select name="recipient_id" class="hidden" required></select>
+                            <?php endif; ?>
+
+                            <input type="hidden" name="recipient_type" value="single">
+                            
+                            <div class="flex items-start gap-3 mt-4 text-sm text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+                                <i class="fas fa-info-circle mt-1 text-blue-500"></i>
+                                <div>
+                                    <p class="font-semibold text-blue-800 dark:text-blue-300">Direct Departmental Submission</p>
+                                    <p>As a staff member, your memos are restricted to your Departmental Head (HOD/Unit Head). All official communications must be channeled through your HOD.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <!-- Submit Button -->
